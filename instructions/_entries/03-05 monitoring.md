@@ -20,7 +20,7 @@ spec:
   tracing:
     samplingRate: "1"
     zipkin:
-      # zipkin:9411 est accessible grâce à docker-compose. Il faudrait un service dedié
+      # zipkin:9411 est accessible grâce à docker compose. Il faudrait un service dedié
       # dans un environnement Kubernetes
       endpointAddress: "http://zipkin:9411/api/v2/spans"
 ```
@@ -38,27 +38,18 @@ En prenant comme exemple le déploiement du service **command-api**.
   ############################
   command-api:
     image: dockerutils/command-api
-    #build: ../implementations/command-api
-    networks:
-      - hello-dapr
     environment:
      - PUB_URL=http://localhost:3500/v1.0/publish/order-pub-sub/orders
-    depends_on:
-      - redis
   command-api-dapr:
     image: "daprio/daprd:edge"
     command: ["./daprd",
      "-app-id", "command-api",
      "-app-port", "80",
-     "-dapr-grpc-port", "50002",
 +    "-config", "/config/tracing-config.yml",
      "-components-path", "/components"]
     volumes:
         - "./components/:/components"
 +       - "./config/:/config"
-    depends_on:
-      - command-api
-+      - zipkin
     network_mode: "service:command-api"
 ```
 
@@ -184,8 +175,6 @@ De plus, chaque couple (service, sidecar) partage une même interface réseau,  
 +    expose:
 +      - 9090
       ...
-    networks:
-      - hello-dapr
   order-processing-dapr:
     image: "daprio/daprd:edge"
       ...
@@ -309,7 +298,6 @@ Dapr est ensuite configuré pour afficher les logs en format JSON sur stdout ave
      "-app-id", "command-api",
      "-app-port", "80",
 +      "-log-as-json", "true",
-     "-dapr-grpc-port", "50002",
      "-config", "/config/tracing-config.yml",
      "-components-path", "/components"]
      ...
