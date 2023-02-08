@@ -160,9 +160,9 @@ Le frontend va être la vitrine de notre site, qui s'exécute sur le navigateur 
 Pour démarrer l'application, il suffit de lancer la commande
 
 ```shell
-# docker-compose rm permet d'être sûr que les changements dans docker-compose.yml
+# docker compose rm permet d'être sûr que les changements dans docker-compose.yml
 # sont pris en compte
-docker-compose rm -fsv ; docker-compose up
+docker compose rm -fsv ; docker compose up --no-attach redis
 ```
 
 Le frontend devrait être disponible à l'adresse `localhost:8089`. Cliquer sur le boutton **Commander** permet de lancer une commande.
@@ -256,13 +256,9 @@ Il ne reste plus qu'à renseigner cette URL dans les variables d'environnements 
   ############################
   command-api:
     image: dockerutils/command-api
-    networks:
-      - hello-dapr
     environment:
 -     - PUB_URL=
 +     - PUB_URL=http://localhost:3500/v1.0/publish/order-pub-sub/orders
-    depends_on:
-      - redis
 ...
 ```
 

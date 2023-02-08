@@ -1,43 +1,30 @@
-version: '3'
 services:
   ############################
   # Frontend
   ############################
   command-frontend:
     image: dockerutils/command-frontend
-    #build: ../implementations/command-frontend
     ports:
       - "8089:80"
     environment:
       - COMMAND_API_HOST=command-api
-    depends_on:
-      - redis
-    networks:
-      - hello-dapr
 
   ############################
   # Command API
   ############################
   command-api:
     image: dockerutils/command-api
-    #build: ../implementations/command-api
-    networks:
-      - hello-dapr
     environment: 
      - PUB_URL=
-    depends_on:
-      - redis
   command-api-dapr:
     image: "daprio/daprd:edge"
     command: ["./daprd",
      "-app-id", "command-api",
      "-app-port", "80",
-     "-dapr-grpc-port", "50002",
+     "-log-level", "warn",
      "-components-path", "/components"]
     volumes:
         - "./components/:/components"
-    depends_on:
-      - command-api
     network_mode: "service:command-api"
 
 
@@ -46,22 +33,15 @@ services:
   ############################
   order-processing:
     image: dockerutils/order-processing
-    #build: ../implementations/order-processing
-    depends_on:
-      - redis
-    networks:
-      - hello-dapr
   order-processing-dapr:
     image: "daprio/daprd:edge"
     command: ["./daprd",
      "-app-id", "order-processing",
      "-app-port", "8080",
-     "-dapr-grpc-port", "50002",
+     "-log-level", "warn",
      "-components-path", "/components"]
     volumes:
         - "./components/:/components"
-    depends_on:
-      - order-processing
     network_mode: "service:order-processing"
 
   ############################
@@ -69,16 +49,3 @@ services:
   ############################
   redis:
     image: "redis:alpine"
-    networks:
-      - hello-dapr
-
-  # mongo:
-  #   image: mongo
-  #   networks:
-  #     - hello-dapr
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: root
-  #     MONGO_INITDB_ROOT_PASSWORD: example
-
-networks:
-    hello-dapr:
