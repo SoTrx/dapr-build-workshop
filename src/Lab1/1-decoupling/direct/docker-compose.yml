@@ -1,4 +1,3 @@
-version: '3'
 services:
   ##############
   # Node app
@@ -12,8 +11,6 @@ services:
       - "50002:50002"
     depends_on:
       - redis
-    networks:
-      - hello-dapr
   ##############
   # Python app 
   ##############
@@ -23,16 +20,8 @@ services:
       - STATE_API_BASE_URL=http://nodeapp:3000
     depends_on:
       - redis
-    networks:
-      - hello-dapr
   ##############
   # State store
   ##############
   redis:
     image: "redis:alpine"
-    ports:
-      - "6380:6379"
-    networks:
-      - hello-dapr
-networks:
-    hello-dapr:

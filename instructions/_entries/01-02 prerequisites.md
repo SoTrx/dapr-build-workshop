@@ -11,8 +11,8 @@ Ce workshop va demander les éléments suivants:
 
 - une souscription Azure
 - Azure CLI (**>= 2.30**) **et son extension** pour Containers Apps
-- [Docker](https://www.docker.com/) et [docker-compose](https://docs.docker.com/compose/install/)
-- [Les sources du workshop](https://aka.ms/daprartifacts) (Si le téléchargement ne fonctionne pas en cliquant, copiez l'URL du lien et collez là dans un nouvel onglet)
+- [Docker](https://www.docker.com/) avec son extension [compose](https://docs.docker.com/compose/install/)(**>=1.27.0**). L'extension est incluse dans Docker-Desktop, il faudra donc seulement l'installer sur Linux.
+- [Les sources du workshop](https://aka.ms/daprartifacts)
 
 ### Installer Azure CLI et l'extension pour Azure Container Apps
 

@@ -1,66 +1,41 @@
-version: '3'
 services:
   ############################
   # Node app + Dapr sidecar
   ############################
   nodeapp:
     build: ./node
-    ports:
-      - "50002:50002"
-    depends_on:
-      - redis
-      - mongo
-    networks:
-      - hello-dapr
   nodeapp-dapr:
     image: "daprio/daprd:edge"
     command: ["./daprd",
      "-app-id", "nodeapp",
      "-app-port", "3000",
-     "-dapr-grpc-port", "50002",
+     "-log-level", "warn",
      "-components-path", "/components"]
     volumes:
-        - "./components/:/components"
-    depends_on:
-      - nodeapp
+        - "./components/:/components:ro"
     network_mode: "service:nodeapp"
   ############################
   # Python app + Dapr sidecar
   ############################
   pythonapp:
     build: ./python
-    depends_on:
-      - redis
-      - mongo
-    networks:
-      - hello-dapr
   pythonapp-dapr:
     image: "daprio/daprd:edge"
     command: ["./daprd",
     "-app-id", "pythonapp",
+    "-log-level", "warn",
      "-components-path", "/components"]
     volumes:
-      - "./components/:/components"
-    depends_on:
-      - pythonapp
+      - "./components/:/components:ro"
     network_mode: "service:pythonapp"
   ############################
   # Redis state stores
   ############################
   redis:
     image: "redis:alpine"
-    ports:
-      - "6380:6379"
-    networks:
-      - hello-dapr
 
   mongo:
     image: mongo
-    networks:
-      - hello-dapr
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
-
-networks:
-    hello-dapr:

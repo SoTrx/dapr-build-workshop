@@ -16,10 +16,8 @@ Pour illuster cela, nous allons déployer une autre version de l'application pr�
 Cette nouvelle version est exécutable en utilisant la commande suivante:
 
 ```shell
-# Si make est installé
-make run
-# Sinon
-docker-compose up
+# On ignore les logs des services mongo et redis pour éviter une pollution des logs
+docker compose up --no-attach mongo --no-attach redis
 ```
 
 > **Question**: Comparez les deux versions (avec et sans Dapr) du service NodeJS. Comment le service recupère t-il le message ?
@@ -51,33 +49,25 @@ Solution:
   # Application principale
   nodeapp:
     build: ./node
-    ports:
-      - "50002:50002"
-    depends_on:
-      - redis
-      - mongo
-    networks:
-      - hello-dapr
   # Sidecar
   nodeapp-dapr:
     image: "daprio/daprd:edge"
     # Configuration du sidecar pour l'application node
     command: ["./daprd",
-    # Id de l'application pour dapr.
+    # Id de l'application pour Dapr
     # Cet ID permet par la suite de faire de l'invocation de service (voir Lab2)
      "-app-id", "nodeapp",
-    # Port d'écoute de l'application principale.
+    # Port d'écoute de l'application principale
     # Utilisé quand le sidecar transmet des informations à l'application principale
      "-app-port", "3000",
-    # Port utilisé pour communiquer entre les sidecars en gRPC
-     "-dapr-grpc-port", "50002",
+     # Niveau de verbosité du sidecar
+     # "info" ou "debug" donneront plus de details sur le fonctionnement du sidecar
+     "-log-level", "warn",
      # Où trouver les composants Dapr (question suivante)
      "-components-path", "/components"]
     volumes:
-        - "./components/:/components"
-    depends_on:
-      - nodeapp
-    # Cette instruction permet de partager la même interface réseau
+        - "./components/:/components:ro"
+    # Demande au sidecar de partager son interface localhost avec l'application principale
     network_mode: "service:nodeapp"
 ```
 

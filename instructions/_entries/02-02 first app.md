@@ -24,10 +24,9 @@ Cette application est constituée de trois parties:
 L'application peut être executée en local à l'aide de docker-compose.
 
 ```shell
-    # Si make est installé
-    make run
-    # Sinon
-    docker-compose up
+    # L'option "--no-attach" permet de cacher les logs de redis
+    # En cas de problème, elle peut être enlevée pour obtenir plus de détails
+    docker-compose up --no-attach redis
 ```
 
 > **En pratique** : Démarrez l'application. Vérifiez que vous obtenez une trace de cette forme:

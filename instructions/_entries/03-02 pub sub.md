@@ -155,7 +155,9 @@ Voici l'état actuel de l'application de pré-commande fil rouge :
 
 Le frontend va être la vitrine de notre site, qui s'exécute sur le navigateur du client (raison pour laquelle il n'a pas de sidecar Dapr rattaché) et l'API la porte d'entrée de l'architecture du backend.
 
-L'application peut être lancée en se rendant le dossier `src/Lab2/1-pub-sub` puis en lançant la commande
+> **Note** : Cette nouvelle application se trouve dans le dossier `src/Lab2/1-pub-sub`
+
+Pour démarrer l'application, il suffit de lancer la commande
 
 ```shell
 # docker-compose rm permet d'être sûr que les changements dans docker-compose.yml
@@ -177,7 +179,8 @@ A noter:
 
 - Chaque texte en violet est une variable d'environnement à remplir dans `src/Lab2/1-pub-sub/docker-compose.yml`
   - **PUB_URL** : URL appelée par le service **command-api** pour publier un message. Il s'agit d'un appel vers son sidecar, il sera donc préfixé par _http://localhost:3500_.
-  - **/process-order** : Endpoint HTTP POST de traitement de message. Les nouveaux messages doivent être redirigés vers cette URL.
+  - **COMMAND_API_HOST** : URL du service **command-api** au regard de **command-frontend**. Cette valeur est déjà pré-remplie
+- **/process-order** : Endpoint HTTP POST de traitement de message. Les nouveaux messages doivent être redirigés vers cette URL.
 
 > **Question**: Dans le dossier `src/Lab2/1-pub-sub/components`, il y a maintenant un nouveau fichier `pubsub.yaml`. Quelle est son utilité ? Quel est le nom du **composant dapr** associé ?
 
