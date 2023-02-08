@@ -212,7 +212,7 @@ http://localhost:3500/v1.0/invoke/receipt-generator/method/
 **Rappel**: Pour lancer un fichier docker-compose, lancez la commande suivante 
 
 ```sh
-docker-compose rm -fsv ; docker-compose up
+docker compose rm -fsv ; docker compose up --no-attach redis
 ```
 
 La trace de succès devrait avoir cette forme :
@@ -227,16 +227,11 @@ Solution:
   ############################
   order-processing:
     image: dockerutils/order-processing
-    #build: ../implementations/order-processing
-    depends_on:
-      - redis
     environment:
 -      - STOCK_MANAGER_INVOKE_URL=
 +      - STOCK_MANAGER_INVOKE_URL=http://localhost:3500/v1.0/invoke/stock-manager/method/stock
 -      - RECEIPT_GEN_INVOKE_URL=
 +      - RECEIPT_GEN_INVOKE_URL=http://localhost:3500/v1.0/invoke/receipt-generator/method/
-    networks:
-      - hello-dapr
 ```
 
 {% endcollapsible %}
@@ -266,12 +261,7 @@ Pour appliquer cette configuration à **receipt-generator** par exemple il faudr
   # Receipt Generator
   ############################
   receipt-generator:
-    #image: dockerutils/receipt-generator
-    build: ../implementations/receipt-generator
-    depends_on:
-      - redis
-    networks:
-      - hello-dapr
+    image: dockerutils/receipt-generator
     environment:
       - RUST_LOG=debug
   receipt-generator-dapr:
@@ -279,13 +269,10 @@ Pour appliquer cette configuration à **receipt-generator** par exemple il faudr
     command: ["./daprd",
      "-app-id", "receipt-generator",
      "-app-port", "8081",
-     "-dapr-grpc-port", "50002",
 +    "-config /config/config.yml"
      "-components-path", "/components"]
     volumes:
         - "./components/:/components"
 +       - "./config/config.yaml"
-    depends_on:
-      - receipt-generator
     network_mode: "service:receipt-generator"
 ```
