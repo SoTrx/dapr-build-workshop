@@ -1,116 +1,22 @@
-version: '3'
 services:
   ############################
   # Frontend
   ############################
   command-frontend:
     image: dockerutils/command-frontend
-    #build: ../implementations/command-frontend
     ports:
       - "8089:80"
     environment:
       - COMMAND_API_HOST=command-api
     depends_on:
       - redis
-    networks:
-      - hello-dapr
-
-  # ############################
-  # # Command API
-  # ############################
-  # command-api:
-  #   image: dockerutils/command-api
-  #   #build: ../implementations/command-api
-  #   networks:
-  #     - hello-dapr
-  #   environment: 
-  #    - PUB_URL=http://localhost:3500/v1.0/publish/order-pub-sub/orders
-  #   depends_on:
-  #     - redis
-  # command-api-dapr:
-  #   image: "daprio/daprd:edge"
-  #   command: ["./daprd",
-  #    "-app-id", "command-api",
-  #    "-app-port", "80",
-  #    "-dapr-grpc-port", "50002",
-  #    "-config", "/config/tracing-config.yml",
-  #    "-components-path", "/components"]
-  #   volumes:
-  #       - "./components/:/components"
-  #       - "./config/:/config"
-  #   depends_on:
-  #     - command-api
-  #     - zipkin
-  #   network_mode: "service:command-api"
-
-
-  # ############################
-  # # Order Processing
-  # ############################
-  # order-processing:
-  #   image: dockerutils/order-processing
-  #   #build: ../implementations/order-processing
-  #   depends_on:
-  #     - redis
-  #   environment:
-  #     - STOCK_MANAGER_INVOKE_URL=http://localhost:3500/v1.0/invoke/stock-manager/method/stock
-  #     - RECEIPT_GEN_INVOKE_URL=http://localhost:3500/v1.0/invoke/receipt-generator/method/
-  #   networks:
-  #     - hello-dapr
-  # order-processing-dapr:
-  #   image: "daprio/daprd:edge"
-  #   command: ["./daprd",
-  #    "-app-id", "order-processing",
-  #    "-app-port", "8080",
-  #    "-config", "/config/tracing-config.yml",
-  #    "-dapr-grpc-port", "50002",
-  #    "-components-path", "/components"]
-  #   volumes:
-  #       - "./components/:/components"
-  #       - "./config/:/config"
-  #   depends_on:
-  #     - order-processing
-  #     - zipkin
-  #   network_mode: "service:order-processing"
-
-
-  # ############################
-  # # Stock Manager
-  # ############################
-  # stock-manager:
-  #   image: dockerutils/stock-manager
-  #   #build: ../implementations/stock-manager
-  #   depends_on:
-  #     - redis
-  #   networks:
-  #     - hello-dapr
-  # stock-manager-dapr:
-  #   image: "daprio/daprd:edge"
-  #   command: ["./daprd",
-  #    "-app-id", "stock-manager",
-  #    "-app-port", "8081",
-  #    "-config", "/config/tracing-config.yml",
-  #    "-dapr-grpc-port", "50002",
-  #    "-components-path", "/components"]
-  #   volumes:
-  #       - "./components/:/components"
-  #       - "./config/:/config"
-  #   depends_on:
-  #     - stock-manager
-  #     - zipkin
-  #   network_mode: "service:stock-manager"
-
-
   ############################
   # Receipt Generator
   ############################
   receipt-generator:
     image: dockerutils/receipt-generator
-    #build: ../implementations/receipt-generator
     depends_on:
       - redis
-    networks:
-      - hello-dapr
     environment:
       - RUST_LOG=debug
       - MAIL_TO=
@@ -120,15 +26,13 @@ services:
     command: ["./daprd",
      "-app-id", "receipt-generator",
      "-app-port", "8081",
-     "-config", "/config/tracing-config.yml",
-     "-dapr-grpc-port", "50002",
+     "-log-level", "warn",
      "-components-path", "/components"]
     volumes:
         - "./components/:/components"
-        - "./config/:/config"
     depends_on:
-      - receipt-generator
-      - zipkin
+      vault-init:
+        condition: service_completed_successfully
     network_mode: "service:receipt-generator"
 
   ############################
@@ -138,13 +42,18 @@ services:
     image: vault:latest
     environment:
       - VAULT_DEV_ROOT_TOKEN_ID=roottoken
-      - VAULT_ADDR=http://127.0.0.1:8200
+      - VAULT_DEV_LISTEN_ADDR=http://127.0.0.1:8200
+      - VAULT_API_ADDR=http://127.0.0.1:8200
     cap_add:
       # Cette capacité permet au coffre-fort d'empêcher ses
       # pages de RAM d'être stockées sur le disque
       - IPC_LOCK
-    networks:
-      - hello-dapr
+    # healthcheck:
+    #   test: ["CMD", "wget", "--spider", "--proxy", "off", http://127.0.0.1:8200/v1/sys/health"]
+    #   interval: 5s
+    #   timeout: 30s
+    #   retries: 5 
+    #   start_period: 5s  
 
   # Initialisation des secrets du Vault
   # (Le faire de cette manière en dehors d'un workshop
@@ -155,6 +64,7 @@ services:
       - /bin/ash
       - -c
       - |
+        sleep 5
         vault kv put -mount=secret dapr/redis REDIS_PASS=suchStrongP4ssword!!
     environment:
       - VAULT_TOKEN=roottoken
@@ -164,35 +74,10 @@ services:
     network_mode: "service:vault"
 
   ############################
-  # Zipkin
-  ############################
-  zipkin:
-    image: openzipkin/zipkin
-    environment:
-      - TZ=CET
-    ports:
-      - 9415:9411
-    networks:
-      - hello-dapr
-
-  ############################
   # Redis state stores
   ############################
   redis:
     image: "redis:alpine"
     command: redis-server --requirepass suchStrongP4ssword!!
-    networks:
-      - hello-dapr
     depends_on:
-      - vault
-
-  # mongo:
-  #   image: mongo
-  #   networks:
-  #     - hello-dapr
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: root
-  #     MONGO_INITDB_ROOT_PASSWORD: example
-
-networks:
-    hello-dapr:
+      - vault-init

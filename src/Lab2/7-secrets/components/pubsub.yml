@@ -9,4 +9,8 @@ spec:
   - name: redisHost
     value: redis:6379
   - name: redisPassword
-    value: ""
+    secretKeyRef:
+      name: redis
+      key:  REDIS_PASS
+auth:
+  secretStore: vault
