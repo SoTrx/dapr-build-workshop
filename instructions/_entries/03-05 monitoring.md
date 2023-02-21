@@ -58,7 +58,8 @@ En plus du déploiement de Zipkin en lui-même, la configuration de Dapr est app
 Dans un contexte Kubernetes, la configuration serait appliquée à l'aide d'un `kubectl apply -f config-tracing.yml`
 {% endcollapsible %}
 
-Déployez `src/Lab2/4-observability/docker-compose.yml` et passez quelques commandes via l'interface. Naviguez à l'adresse `localhost:9415` pour vous rendre sur l'interface de Zipkin. Dans l'onglet "dépendances", prenez une plage large (ex: [j-1, j+1]) et observez le diagramme.
+Déployez `src/Lab2/4-observability/docker-compose.yml` à l'aide de la commande suivante
+et passez quelques commandes via l'interface. Naviguez à l'adresse `localhost:9415` pour vous rendre sur l'interface de Zipkin. Dans l'onglet "dépendances", prenez une plage large (ex: [j-1, j+1]) et observez le diagramme.
 
 > **Question** : Quels sont les services affichés ? Comment ces services communiquent-ils ?
 
@@ -137,18 +138,18 @@ Solution:
 
 On observe que les métriques présentes sont celles des latences et des composants.
 
-L'utilisation CPU/RAM n'est elle pas renseignée pour cet exemple. En effet, ces données sont extrapolées à partir des [métriques Kubernetes](https://github.com/kubernetes/kubernetes/blob/master/test/instrumentation/testdata/stable-metrics-list.yaml), qui ne sont pas présentes dans un contexte docker-compose
+L'utilisation CPU/RAM n'est elle pas renseignée pour cet exemple. En effet, ces données sont extrapolées à partir des [métriques Kubernetes](https://github.com/kubernetes/kubernetes/blob/master/test/instrumentation/testdata/stable-metrics-list.yaml), qui ne sont pas présentes dans un contexte docker compose
 
 {% endcollapsible %}
 
-##### Par curiosité : Quelques détails sur Prometheus et docker-compose
+##### Par curiosité : Quelques détails sur Prometheus et docker compose
 
-Le déploiement de cette section n'est pas expliqué à proprement parler, seulement exécuté. La raison à cela est que faire fonctionner Prometheus avec Dapr sur docker-compose demande d'utiliser une configuration particulière qui n'a pas sa place dans un scénario de production.
+Le déploiement de cette section n'est pas expliqué à proprement parler, seulement exécuté. La raison à cela est que faire fonctionner Prometheus avec Dapr sur docker compose demande d'utiliser une configuration particulière qui n'a pas sa place dans un scénario de production.
 
 En effet, les métriques de Dapr sont émises par chaque sidecar sur leur port respectif 9090 (par défaut).
 Dans le contexte d'une utilisation sur Kubernetes ou sans orchestrateur, chaque sidecar émettrait sur le même endpoint sur le port 9090. Il n'y aurait plus qu'alors qu'à renseigner ce endpoint dans Prometheus.
 
-Cependant, la gestion des [docker networks](https://docs.docker.com/network/) dans docker-compose ne permet pas à chaque sidecar d'émettre sur le même endpoint. Afin de retrouver le comportement voulu, il faut alors lister explicitement chacun des services dans la configuration de Prometheus.
+Cependant, la gestion des [docker networks](https://docs.docker.com/network/) dans docker compose ne permet pas à chaque sidecar d'émettre sur le même endpoint. Afin de retrouver le comportement voulu, il faut alors lister explicitement chacun des services dans la configuration de Prometheus.
 
 ```yml
 global:
@@ -271,7 +272,7 @@ Une ligne de log a cette forme
     "level": ["info"],
     // Meta -> Temps de reception de la ligne de log
     "@timestamp": ["2022-07-04T13:37:51.345Z"],
-    // Meta -> Nom du conteneur vu par docker-compose
+    // Meta -> Nom du conteneur vu par docker compose
     "container_name": ["/6-logs_order-processing-dapr_1"],
     // Meta -> UUID du conteneur docker
     "container_id": [
@@ -308,6 +309,6 @@ Dapr est ensuite configuré pour afficher les logs en format JSON sur stdout ave
 +       tag: httpd.access
 ```
 
-Cette méthode étant propre à l'orchestrateur docker-compose, elle n'est pas détaillée dans le coeur de l'activité.
+Cette méthode étant propre à l'orchestrateur docker compose, elle n'est pas détaillée dans le coeur de l'activité.
 
 Sur Kubernetes le déploiement serait toutefois similaire. Il suffirait en effet de déployer FluentD sur le cluster et d'ajouter l'annotation `log-as-json` au déploiement des services pour obtenir le même resultat. Un tutoriel complet est disponible [sur le site de Dapr](https://docs.dapr.io/operations/monitoring/logging/fluentd/).
