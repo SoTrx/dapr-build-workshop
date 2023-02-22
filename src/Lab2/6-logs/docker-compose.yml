@@ -1,60 +1,49 @@
-version: '3'
+# Snippet réutilisable permettant à un service d'utiliser
+# Fluentd comme logging driver
+x-log: 
+      &fluentd
+      driver: "fluentd"
+      options:
+        fluentd-address: host.docker.internal:24224
+        tag: httpd.access
+
+
 services:
   ############################
   # Frontend
   ############################
   command-frontend:
     image: dockerutils/command-frontend
-    #build: ../implementations/command-frontend
     ports:
       - "8089:80"
     environment:
       - COMMAND_API_HOST=command-api
-    depends_on:
-      - redis
-    networks:
-      - hello-dapr
-
   ############################
   # Command API
   ############################
   command-api:
     image: dockerutils/command-api
-    #build: ../implementations/command-api
-    networks:
-      - hello-dapr
+    links:
+      - "fluentd"
     environment: 
      - PUB_URL=http://localhost:3500/v1.0/publish/order-pub-sub/orders
-    depends_on:
-      - redis
-      - fluentd
-    # logging:
-    #   driver: "fluentd"
-    #   options:
-    #     fluentd-address: localhost:24224
-    #     tag: httpd.access
+    logging: *fluentd
   command-api-dapr:
     image: "daprio/daprd:edge"
     command: ["./daprd",
      "-app-id", "command-api",
      "-app-port", "80",
-      "-log-as-json", "true",
-     "-dapr-grpc-port", "50002",
+     "-log-as-json", "true",
+     "-log-level", "warn",
      "-config", "/config/tracing-config.yml",
      "-components-path", "/components"]
     volumes:
         - "./components/:/components"
         - "./config/:/config"
     depends_on:
-      - command-api
-      - zipkin
       - fluentd
     network_mode: "service:command-api"
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: localhost:24224
-        tag: httpd.access
+    logging: *fluentd
 
 
   ############################
@@ -62,37 +51,28 @@ services:
   ############################
   order-processing:
     image: dockerutils/order-processing
-    #build: ../implementations/order-processing
-    depends_on:
-      - redis
-      - fluentd
+    links:
+      - "fluentd"
     environment:
       - STOCK_MANAGER_INVOKE_URL=http://localhost:3500/v1.0/invoke/stock-manager/method/stock
       - RECEIPT_GEN_INVOKE_URL=http://localhost:3500/v1.0/invoke/receipt-generator/method/
-    networks:
-      - hello-dapr
+    logging: *fluentd
   order-processing-dapr:
     image: "daprio/daprd:edge"
     command: ["./daprd",
      "-app-id", "order-processing",
      "-app-port", "8080",
-      "-log-as-json", "true",
+     "-log-as-json", "true",
+     "-log-level", "warn",
      "-config", "/config/tracing-config.yml",
-     "-dapr-grpc-port", "50002",
      "-components-path", "/components"]
     volumes:
         - "./components/:/components"
         - "./config/:/config"
     depends_on:
-      - order-processing
-      - zipkin
       - fluentd
     network_mode: "service:order-processing"
-    logging:
-      driver: "fluentd"
-      options:
-         fluentd-address: localhost:24224
-         tag: httpd.access
+    logging: *fluentd
 
 
   ############################
@@ -100,39 +80,23 @@ services:
   ############################
   stock-manager:
     image: dockerutils/stock-manager
-    #build: ../implementations/stock-manager
-    depends_on:
-      - redis
-      - fluentd
-    networks:
-      - hello-dapr
-    # logging:
-    #   driver: "fluentd"
-    #   options:
-    #     fluentd-address: localhost:24224
-    #     tag: httpd.access
+    links:
+     - fluentd
+    logging: *fluentd
   stock-manager-dapr:
     image: "daprio/daprd:edge"
     command: ["./daprd",
      "-app-id", "stock-manager",
      "-app-port", "8081",
-      "-log-as-json", "true",
+     "-log-level", "debug",
+     "-log-as-json", "true",
      "-config", "/config/tracing-config.yml",
-     "-dapr-grpc-port", "50002",
      "-components-path", "/components"]
     volumes:
         - "./components/:/components"
         - "./config/:/config"
-    depends_on:
-      - stock-manager
-      - zipkin
-      - fluentd
     network_mode: "service:stock-manager"
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: localhost:24224
-        tag: httpd.access
+    logging: *fluentd
 
 
   ############################
@@ -140,72 +104,40 @@ services:
   ############################
   receipt-generator:
     image: dockerutils/receipt-generator
-    #build: ../implementations/receipt-generator
-    depends_on:
-      - redis
-      - fluentd
-    networks:
-      - hello-dapr
+    links:
+     - fluentd
     environment:
       - RUST_LOG=debug
       - MAIL_TO=
       - MAILING_BINDING_URL=http://localhost:3500/v1.0/bindings/mail
-    # logging:
-    #   driver: "fluentd"
-    #   options:
-    #     fluentd-address: localhost:24224
-    #     tag: httpd.access
-
+    logging: *fluentd
   receipt-generator-dapr:
     image: "daprio/daprd:edge"
     command: ["./daprd",
      "-app-id", "receipt-generator",
      "-app-port", "8081",
-      "-log-as-json", "true",
+     "-log-level", "warn",
+     "-log-as-json", "true",
      "-config", "/config/tracing-config.yml",
-     "-dapr-grpc-port", "50002",
      "-components-path", "/components"]
     volumes:
         - "./components/:/components"
         - "./config/:/config"
     depends_on:
-      - receipt-generator
-      - zipkin
       - fluentd
     network_mode: "service:receipt-generator"
-    logging:
-      driver: "fluentd"
-      options:
-        fluentd-address: localhost:24224
-        tag: httpd.access
-
-  ############################
-  # Zipkin
-  ############################
-  zipkin:
-    image: openzipkin/zipkin
-    environment:
-      - TZ=CET
-    ports:
-      - 9415:9411
-    networks:
-      - hello-dapr
+    logging: *fluentd
 
   ############################
   # Redis state stores
   ############################
   redis:
     image: "redis:alpine"
-    networks:
-      - hello-dapr
 
   fluentd:
-    #image: fluent/fluentd
     build: ./fluentd
     volumes:
       - ./fluentd/conf:/fluentd/etc
-    #links:
-    #  - "elasticsearch"
     ports:
       - "24224:24224"
       - "24224:24224/udp"
@@ -235,15 +167,3 @@ services:
       - "5601:5601"
     depends_on:
       - elasticsearch
-
-
-  # mongo:
-  #   image: mongo
-  #   networks:
-  #     - hello-dapr
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: root
-  #     MONGO_INITDB_ROOT_PASSWORD: example
-
-networks:
-    hello-dapr:
