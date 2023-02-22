@@ -36,14 +36,14 @@ Solution :
 
 {% collapsible %}
 
-D'après [la documentation](https://docs.dapr.io/reference/components-reference/supported-secret-stores/), les différents coffres forts disponibles sont :
+D'après [la documentation](https://docs.dapr.io/reference/components-reference/supported-secret-stores/)(Février 2023), les différents coffres forts disponibles sont :
 
 | Nom                                   | Composant | Localisation              | Production ?                                                           |
 | ------------------------------------- | --------- | ------------------------- | ---------------------------------------------------------------------- |
-| Hashicorp Vault                       | Alpha     | Externe / Dans le cluster | Oui, ne pas utiliser le mode dev. Attention à la maturité du composant |
+| Hashicorp Vault                       | Stable    | Externe / Dans le cluster | Oui                                                                    |
 | Secrets Kubernetes                    | Stable    | Dans le cluster           | A éviter. Secrets en base64, limités à un namespace                    |
-| Variables d'environnement             | Beta      | Dans le noeud             | Non.                                                                   |
-| Fichier                               | Beta      | Dans le conteneur         | Non.                                                                   |
+| Variables d'environnement             | Stable    | Dans le noeud             | Non.                                                                   |
+| Fichier                               | Stable    | Dans le conteneur         | Non.                                                                   |
 | Alibaba Parameter Store               | Alpha     | Externe                   | Oui. Attention à la maturité du composant                              |
 | AWS Secrets Manager / Parameter Store | Alpha     | Externe                   | Oui. Attention à la maturité du composant                              |
 | GCP Parameter Store                   | Alpha     | Externe                   | Oui. Attention à la maturité du composant                              |
