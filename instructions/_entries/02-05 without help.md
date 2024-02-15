@@ -66,4 +66,3 @@ Dapr allows both assisting containerized applications (sidecar pattern) and proc
 While the sidecar part is indicated in cases of container orchestration (Kubernetes, docker-compose, docker swarm, etc.), the process part allows us to run applications locally without having to think about containerizing them.
 
 These two operating modes ensure compatibility with cloud services such as managed Kubernetes (AKS) or simply hosting applications in process mode (App Service).
-```

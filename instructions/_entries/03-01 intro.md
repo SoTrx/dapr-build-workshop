@@ -1,14 +1,14 @@
 ---
 sectionid: lab2-intro
 sectionclass: h2
-title: Contexte
+title: Context
 parent-id: lab-2
 ---
 
-Dans ce deuxième Lab, nous allons voir d'autres fonctionnalités ajoutées par Dapr, à travers une nouvelle application qui évoluera au fur et à mesure des exercices. 
+In this second Lab, we will explore additional features introduced by Dapr through a new application that will evolve as we progress through the exercises.
 
-Cette nouvelle application va permettre de précommander un produit très spécifique. Elle a également une particularité, tous ses services sont codés dans des langages différents.  
+This new application will allow pre-ordering a very specific product. It also has a unique characteristic – all its services are coded in different languages.
 
-Les implémentations des différents services utilisés sont données à titre d'information dans le dossier `src/Lab2/implementations`.
+Implementations of the various services used are provided for reference in the `src/Lab2/implementations` folder.
 
-Il faut cependant noter que le but de cet exercice n'est pas de s'intéresser au code des services mais plutôt de voir comment on peut obtenir un niveau de service équivalent indépendamment des langages utilisés.
+However, it is important to note that the purpose of this exercise is not to delve into the code of the services but rather to understand how an equivalent level of service can be achieved independently of the languages used.

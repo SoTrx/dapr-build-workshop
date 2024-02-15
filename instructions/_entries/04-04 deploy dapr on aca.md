@@ -5,24 +5,9 @@ title: Deploy a Dapr app on ACA
 parent-id: lab-3
 ---
 
-Nous avons maintenant deployé une application sur ACA. Mais cette première application _hello-world_ n'utilise pas Dapr.
+### Solution for the First Exercise
 
-Nous allons donc reprendre l'application du Lab1 et la déployer sur ACA.
-
-![Première app](/media/lab1/first-app-vanilla.png)
-
-Hormis le statestore, cette application a besoin de deux services:
-
-- L'application Node (disponible en tant qu'image à `dockerutils/nodeapp`)
-- L'application Python (disponible en tant qu'image à `dockerutils/pythonapp`)
-
-> **En pratique** : En utilisant la commande `az containerapp create`, créez 2 container app dans le même environnement pour les 2 services ci-dessus
-
-**Indication** : Utilisez les images proposées pour les applications node et python, ce sera plus simple que de build les applications. Vous **n'avez pas besoin d'identifiants pour le registre de conteneurs**, il accepte les pull anonymes
-
-Solution:
-
-{% collapsible %}
+To create two container apps using the `az containerapp create` command for the provided services, you can use the following commands:
 
 ```bash
 # Nodeapp
@@ -48,92 +33,46 @@ az containerapp create \
   --dapr-app-id 'pythonapp'
 ```
 
-{% endcollapsible %}
+This script will create two container apps named `nodeapp` and `pythonapp` using the provided Docker images. The `--enable-dapr` flag is used to enable Dapr for these container apps, and the `--dapr-app-id` flag sets the Dapr application ID.
 
-> **Question**: Regardez les logs du conteneur **nodeapp**, que constatez-vous ? Proposez une explication.
+### Solution for the Second Exercise
 
-Solution
-{% collapsible %}
-
-En regardant les logs de l'application node, on remarque qu'il y a **une erreur**.
+Looking at the logs of the `nodeapp` container, you'll notice an error related to the Dapr state store:
 
 ![Trace](/media/lab3/trace-q1.png)
 
-Cette erreur est due au fait que le composant Dapr `statestore` n'est pas déclaré.
+This error is due to the fact that the Dapr `statestore` component is not declared. To resolve this, you need to create a Dapr component for the state store. However, the syntax for Dapr components is not fully supported on the Container Apps version used in this workshop.
 
-{% endcollapsible %}
-
-### Les composants Dapr sur Container Apps
-
-Sur la version préliminaire de Container Apps ayant servi a rédiger ce workshop, la syntaxe des composants Dapr n'est pas encore supportée entièrement et il faut une adaptation légère des fichiers yml.
-
-Par exemple pour le statestore Redis :
-
-```yml
-# Syntaxe DAPR
-apiVersion: dapr.io/v1alpha1
-kind: Component
-metadata:
-  name: statestore
-spec:
-  type: state.redis
-  version: v1
-  metadata:
-    - name: redisHost
-      value: <HOTE>
-    - name: redisPassword
-      value: ""
-```
-
-```yml
-# Syntaxe ACA
-componentType: state.redis
-version: v1
-metadata:
-  - name: redisHost
-    value: <HOTE>
-  - name: redisPassword
-    value: pass
-# A quelles applications s'applique ce composant
-scopes:
-  - nodeapp
-```
-
-Une autre limitation de la préversion est que certains composants ne sont pas totalement supportés. C'est le cas du composant redis.
-
-Pour stocker l'état de l'application, nous allons donc utiliser un **Storage Account** sur Azure.
-
-Pour créer un nouveau Storage Account exécutez la commande suivante
+Instead, you can use Azure Storage Account as the state store. Create a new Storage Account on Azure and retrieve the access key:
 
 ```bash
-#N'oubliez pas de remplacer les variables, et que le nom du storage acount ne doit pas contenenir de caractères
-# speciaux ou d'espaces
-az storage account create --name $STORAGE_ACCOUNT --resource-group $RESOURCE_GROUP --location westeurope --sku Standard_LRS --kind StorageV2
+# Replace the placeholders with your values
+az storage account create --name <STORAGE_ACCOUNT_NAME> --resource-group <RESOURCE_GROUP> --location <LOCATION> --sku Standard_LRS --kind StorageV2
 
-#Ensuite, on recupère la clef d'accès au storage account crée
-az storage account keys list --resource-group $RESOURCE_GROUP --account-name $STORAGE_ACCOUNT --query '[0].value' --out tsv
+# Get the access key for the created Storage Account
+az storage account keys list --resource-group <RESOURCE_GROUP> --account-name <STORAGE_ACCOUNT_NAME> --query '[0].value' --out tsv
 ```
 
-Ensuite créez un nouveau fichier yml pour le composant de stockage d'état Dapr sur ce Storage account
+Create a YAML file for the state storage component:
 
-```yml
+```yaml
 componentType: state.azure.blobstorage
 version: v1
 metadata:
   - name: accountName
-    value: "<STORAGE_ACC_NAME>"
+    value: "<STORAGE_ACCOUNT_NAME>"
   - name: accountKey
     secretRef: account-key
   - name: containerName
     value: state
 secrets:
   - name: account-key
-    value: "<STORAGE_ACC_KEY>"
+    value: "<STORAGE_ACCOUNT_KEY>"
 scopes:
   - nodeapp
 ```
 
-Pour forcer la prise en compte du composant, on redéploie **nodeapp**
+Replace `<STORAGE_ACCOUNT_NAME>` and `<STORAGE_ACCOUNT_KEY>` with the appropriate values. Then, update the `nodeapp` container app to use the new state storage component:
 
 ```bash
 az containerapp create \
@@ -147,8 +86,8 @@ az containerapp create \
   --dapr-app-id 'nodeapp'
 ```
 
-> **En pratique** : Allez à nouveau regarder les logs de l'application Node pour vérifier le fonctionnement.
+Now, check the logs again for the `nodeapp` container to verify that it's working correctly.
 
-> **Pour les plus avancés (Optionnel)** : Déployez l'applicaton du Lab2 sur ACA.
+### Final Note
 
-Et c'est sur ce dernier exercice que se termine ce workshop
+This concludes the workshop. If you have any further questions or need clarification on any topic, feel free to ask!

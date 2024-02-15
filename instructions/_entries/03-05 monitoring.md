@@ -1,7 +1,7 @@
 ---
 sectionid: lab2-monitoring
 sectionclass: h2
-title: Observabilité
+title: Observability
 parent-id: lab-2
 ---
 

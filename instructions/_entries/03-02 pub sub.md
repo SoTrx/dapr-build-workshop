@@ -5,85 +5,84 @@ title: Pub Sub
 parent-id: lab-2
 ---
 
-### Généralités
 
-> **Question généraliste** : Qu'est-ce que le pattern _Publish Subscribe (PUB/SUB)_ ? A quel besoin repond t-il ?
+### Overview
+
+> **General Question**: What is the _Publish Subscribe (PUB/SUB)_ pattern? What need does it address?
 
 Solution:
 {% collapsible %}
-Le pattern publish/subscribe est un mode de communication asynchrone.
+The publish/subscribe pattern is a form of asynchronous communication.
 
-On va retrouver dans ce mode de communication deux types d'acteurs:
+In this mode of communication, there are two types of actors:
 
-- des **Producteurs** (_Publishers_), qui produisent un contenu, souvent des messages
-- des **Consommateurs** (_Subscribers_), qui attendent du contenu
+- **Producers** (_Publishers_), who generate content, often in the form of messages.
+- **Consumers** (_Subscribers_), who await content.
 
-Par analogie, si une invocation directe pourrait être considérée comme un appel téléphonique, le _pub/sub_ serait alors une boîte mail, que chacun pourrait consulter quand bon lui semble.
+By analogy, if direct invocation could be compared to a phone call, pub/sub would be more like an email inbox that each participant can check at their convenience.
 
-La majorité du temps, le pub/sub fonctionne en **_one to many_**, c'est à dire qu'un message d'un producteur va parvenir à tous les consommateurs. Il existe cependant des configurations **_one to one_**, où un message d'un producteur n'est reçu que par un seul consommateur.
+Most of the time, pub/sub operates in a **_one-to-many_** configuration, meaning a message from a producer reaches all consumers. However, there are **_one-to-one_** configurations where a message from a producer is received by only one consumer.
+
 {% endcollapsible %}
 
 ### Dapr
 
-A l'aide de la [documentation](https://docs.dapr.io/developing-applications/building-blocks/pubsub/), nous allons nous intéresser à ces questions:
+Using the [documentation](https://docs.dapr.io/developing-applications/building-blocks/pubsub/), let's address these questions:
 
-> **Question** : Comment fonctionne la fonctionnalité PUB/SUB de Dapr ? Quel est le chemin d'un message depuis son envoi d'un service A vers un service B ?
+> **Question**: How does Dapr's PUB/SUB feature work? What is the path of a message from its sending service A to service B?
 
-Solution :
+Solution:
 {% collapsible %}
 ![Pub/Sub overview](/media/lab2/pubsub/pubsub-overview.png)
-En reprenant l'image de la documentation, on peut voir que:
 
-- le message passe du service à son sidecar
-- le sidecar résoud le composant, et redirige le message vers l'implémentation sous-jacente
-- l'implémentation notifie tous les sidecars avec le contenu du message
-- les sidecars redirigent le contenu du message vers une route HTTP de leurs services respectifs
-  {% endcollapsible %}
+Referring to the documentation image:
 
-> **Question** : Quelle est la garantie de livraison associée à la fonctionnalité de PUB/SUB ? Quels sont les avantages et les incovénients ?
+- The message passes from the service to its sidecar.
+- The sidecar resolves the component and redirects the message to the underlying implementation.
+- The implementation notifies all sidecars with the message content.
+- Sidecars redirect the message content to an HTTP route in their respective services.
+{% endcollapsible %}
 
-Solution :
+> **Question**: What is the delivery guarantee associated with PUB/SUB functionality? What are the advantages and disadvantages?
+
+Solution:
 {% collapsible %}
-La garantie est **at least once**. ([Lien dans la documentation](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/#at-least-once-guarantee)).
-Cette garantie signifie que chaque message envoyé par un producteur sera reçu au moins une fois par chaque consommateur.
-L'avantage est qu'il n'est pas possible de perdre un message, tout du moins dès lors qu'au moins un consommateur est inscrit au moment de l'envoi du message.
+The guarantee is **at least once** ([Link in the documentation](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/#at-least-once-guarantee)). This guarantee means that each message sent by a producer will be received at least once by each consumer. The advantage is that it prevents message loss, at least as long as at least one consumer is subscribed at the time of message sending.
 
-L'inconvénient principal est qu'il est possible de recevoir plusieurs fois le même message.
-Cet inconvénient peut se traiter applicativement. Un exemple est de retenir l'ID des X derniers messages traités, ou simplement d'avoir un service resistant par conception à la duplication.
+The main disadvantage is the possibility of receiving the same message multiple times. This drawback can be addressed at the application level. For example, by keeping track of the IDs of the last X processed messages or by designing a service to be resistant to duplication.
 
-##### Pour aller plus loin
+#### Going Further
 
-Lors de la conception d'un système de communication, si la possibilité de duplication est absolument à éviter il faudra plutôt s'orienter vers une garantie **at most once**. Un message sera alors livré au plus une fois, ce qui évitera la duplictaion mais pourra occasionner des pertes de messages.
+In designing a communication system, if the possibility of duplication must be absolutely avoided, one should lean towards an **at most once** guarantee. In this case, a message will be delivered at most once, avoiding duplication but risking message loss.
 
-La garantie idéale, **exactly once**, n'est pas proposée dans le cas général. En effet, il existera toujours un cas limite où il faudra relancer la transaction (comsommateur qui échoue pendant la reception d'un message...).
+The ideal guarantee, **exactly once**, is not generally offered. There will always be edge cases where a transaction needs to be retried (e.g., a consumer failing during message reception).
 
 {% endcollapsible %}
 
-> **Question** : Il existe deux méthodes pour souscrire à un _topic_ dans Dapr, quelles sont-elles ? Dans quels cas utiliser les deux ?
+> **Question**: There are two methods to subscribe to a _topic_ in Dapr, what are they? In what cases should both be used?
 
-Solution :
-
+Solution:
 {% collapsible %}
 
-Pour souscrire à un _topic_, Dapr propose deux méthodes:
+To subscribe to a _topic_, Dapr offers two methods:
 
-##### Dans le code
+##### In Code
 
-C'est le moyen "classique". On utilise le SDK pour définir un callback quand un message est reçu.
+This is the "classic" way. The SDK is used to define a callback when a message is received.
 
 ```ts
 import { DaprServer } from "@dapr/dapr";
 const server = new DaprServer();
-// Souscrire au topic "orders" sur le composant de nom "pubsub"
+// Subscribe to the "orders" topic on the "pubsub" component
 await server.pubsub.subscribe("pubsub", "orders", async (orderId) => {
   console.log(`Subscriber received: ${JSON.stringify(orderId)}`);
 });
 await server.startServer();
 ```
 
-##### De manière déclarative
+##### Declaratively
 
-L'autre manière est de déclarer la souscription comme on le ferait avec un composant.
+The other way is to declare the subscription as you would with a component.
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -91,26 +90,26 @@ kind: Subscription
 metadata:
   name: order
 spec:
-  # Sur le composant de nom "pubsub"...
+  # On the "pubsub" component...
   pubsubname: pubsub
-  # quand un message est reçu sur le topic "orders"...
+  # when a message is received on the "orders" topic...
   topic: orders
-  # envoyer le contenu du message sur l'endpoint POST /checkout...
+  # send the message content to the /checkout endpoint...
   route: /checkout
-# des services "orderprocessing" et "checkout"
+# for the "orderprocessing" and "checkout" services
 scopes:
   - orderprocessing
   - checkout
 ```
 
-L'avantage est que les services "orderprocessing" et "checkout" pourront rester génériques. Ils n'auront qu'à utiliser un serveur HTTP écoutant sur l'endpoint /checkout pour recevoir le message.
+The advantage is that the "orderprocessing" and "checkout" services can remain generic. They just need to use an HTTP server listening on the /checkout endpoint to receive the message.
 
 {% endcollapsible %}
 
-> **Ouverture** : Sur la documentation, une fonctionnalité mise en avant est le routage basé sur le contenu (_Content-Based Routing_). Quel est le principe de cette fonctionnalité ? A quel besoin repond t-elle ?
+> **Extension**: The documentation highlights a feature called Content-Based Routing. What is the principle of this feature? What need does it address?
 
 {% collapsible %}
-Le routage basé sur le contenu permet à Dapr de choisir l'endpoint HTTP sur lequel sera redirigé le message en fonction du contenu du message.
+Content-Based Routing allows Dapr to choose the HTTP endpoint to which a message will be redirected based on the content of the message.
 
 ```yaml
 apiVersion: dapr.io/v2alpha1
@@ -118,77 +117,79 @@ kind: Subscription
 metadata:
   name: myevent-subscription
 spec:
-  # Sur le composant de nom "pubsub"...
+  # On the "pubsub" component...
   pubsubname: pubsub
-  # quand un message est reçu sur le topic "inventory"...
+  # when a message is received on the "inventory" topic...
   topic: inventory
-  # envoyer le contenu du message...
+  # send the message content...
   routes:
     rules:
-      # sur l'endpoint "/widgets" si le message est de type "widget"...
+      # to the "/widgets" endpoint if the message type is "widget"...
       - match: event.type == "widget"
         path: /widgets
-      # sur l'endpoint "/gadgets" si le message est de type "gadget"...
+      # to the "/gadgets" endpoint if the message type is "gadget"...
       - match: event.type == "gadget"
         path: /gadgets
-    # sur l'endpoint "/products" sinon
+    # otherwise, send it to the "/products" endpoint
     default: /products
-# sur les applications "app1" et "app2"
+# for the "app1" and "app2" applications
 scopes:
   - app1
   - app2
 ```
 
-Cette fonctionnalité est pensée dans les cas où l'appplication reçoit un grand nombre d'événements différents. Elle permet :
+This feature is useful in cases where the application receives a large number of different events. It helps to:
 
-- d'empêcher de créer un grand nombre de topics, un pour chaque cas limite de l'application. Sur le Cloud public, cela résoud notamment une problématique de coût.
-- d'éviter à l'application elle-même de faire le routage, ce qui entraînerait une complexité inutile.
+- Avoid creating a large number of topics, one for each edge case of the application. On public clouds, this resolves a cost issue.
+- Prevent the application itself from handling routing, which would introduce unnecessary complexity.
 
-Il faut cependant noter que l'abus de cette fonctionnalité pourrait entraîner une difficulté de compréhension des flux de l'application. La meilleure manière d'éviter une telle situation est de prévoir son utilisation dès l'étape de conception.
+However, excessive use of this feature could make it challenging to understand the application's flow. The best way to avoid such a situation is to plan its use during the design phase.
+
 {% endcollapsible %}
 
-### En application
+### In Application
 
-Voici l'état actuel de l'application de pré-commande fil rouge :
+Here is the current state of the pre-order application:
 
 ![Step 0](/media/lab2/app-step-0.png)
 
-Le frontend va être la vitrine de notre site, qui s'exécute sur le navigateur du client (raison pour laquelle il n'a pas de sidecar Dapr rattaché) et l'API la porte d'entrée de l'architecture du backend.
+The frontend serves as the showcase of our site, running on the client's browser (which is why it doesn't have a Dapr sidecar attached), and the API is the entry point to the backend architecture.
 
-> **Note** : Cette nouvelle application se trouve dans le dossier `src/Lab2/1-pubsub`
+> **Note**: This new application is located in the `src/Lab2/1-pubsub` folder.
 
-Pour démarrer l'application, il suffit de lancer la commande
+To start the application, simply run the command:
 
 ```shell
-# docker compose rm permet d'être sûr que les changements dans docker-compose.yml
-# sont pris en compte
+# docker compose rm ensures that changes in docker-compose.yml are applied
 docker compose rm -fsv ; docker compose up --no-attach redis
 ```
 
-Le frontend devrait être disponible à l'adresse `localhost:8089`. Cliquer sur le boutton **Commander** permet de lancer une commande.
+The frontend should be available at `localhost:8089`. Clicking the **Order** button triggers a command.
 
-La prochaine étape dans le développement de cette application est de rajouter un service `order-processing` qui va recevoir et traiter les commandes.
+The next step in developing this application is to add an `order-processing` service that will receive and process orders.
 
-Pour éviter de saturer le service en cas de forte affluence, nous allons opter pour un traitement asynchrone des commandes, en utilisant le pattern Pub/Sub (_Pas forcément idéal, voir Note 1_).
+To avoid overwhelming the service in case of high demand, we will opt for asynchronous order processing, using the Pub/Sub pattern (not necessarily ideal, see Note 1).
 
-Voici donc la cible:
+Here's the target:
 
-![Step 1](/media/lab2/pubsub/app-step-1-pubsub.png)
+![Step 1](/media/lab
 
-A noter:
+2/pubsub/app-step-1-pubsub.png)
 
-- Chaque texte en violet est une variable d'environnement à remplir dans `src/Lab2/1-pubsub/docker-compose.yml`
-  - **PUB_URL** : URL appelée par le service **command-api** pour publier un message. Il s'agit d'un appel vers son sidecar, il sera donc préfixé par _http://localhost:3500_.
-  - **COMMAND_API_HOST** : URL du service **command-api** au regard de **command-frontend**. Cette valeur est déjà pré-remplie
-- **/process-order** : Endpoint HTTP POST de traitement de message. Les nouveaux messages doivent être redirigés vers cette URL.
+Note:
 
-> **Question**: Dans le dossier `src/Lab2/1-pub-sub/components`, il y a maintenant un nouveau fichier `pubsub.yaml`. Quelle est son utilité ? Quel est le nom du **composant dapr** associé ?
+- Each text in purple is an environment variable to be filled in `src/Lab2/1-pubsub/docker-compose.yml`.
+  - **PUB_URL**: URL called by the **command-api** service to publish a message. This is a call to its sidecar, so it will be prefixed by _http://localhost:3500_.
+  - **COMMAND_API_HOST**: URL of the **command-api** service with respect to **command-frontend**. This value is already pre-filled.
+- **/process-order**: HTTP POST endpoint for message processing. New messages should be redirected to this URL.
 
-Solution :
+> **Question**: In the `src/Lab2/1-pub-sub/components` directory, there is now a new file `pubsub.yaml`. What is its purpose? What is the name of the associated **Dapr component**?
+
+Solution:
 
 {% collapsible %}
 
-Ce nouveau fichier est défini comme suit :
+This new file is defined as follows:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -205,49 +206,48 @@ spec:
       value: ""
 ```
 
-Il s'agit du composant Dapr faisant le lien avec l'implémentation du pubsub, ici Redis.
+This is the Dapr component that connects to the Pub/Sub implementation, here Redis.
 
-Le nom du composant (la valeur de la clef du yaml **metadata.name**) est `order-pub-sub`.
-Attention à ne pas confondre ce nom avec le nom du fichier qui lui est simplement pubsub.
+The component's name (the value of the yaml key **metadata.name**) is `order-pub-sub`. It's important not to confuse this name with the file name, which is simply `pubsub`.
 
 {% endcollapsible %}
 
-> **Question**: A l'aide du schéma ci dessus, identifier comment implémenter le PUB/SUB pour `command-api` et `order-processing`
+> **Question**: Using the above diagram, identify how to implement PUB/SUB for `command-api` and `order-processing`.
 
-**Indice** : L'URL qui permet à **command-api** de publier un message est un appel vers son sidecar. L'API pub/sub de Dapr est détaillée [ici](https://docs.dapr.io/reference/api/pubsub_api/).
+**Hint**: The URL that allows **command-api** to publish a message is a call to its sidecar. Dapr's pub/sub API is detailed [here](https://docs.dapr.io/reference/api/pubsub_api/).
 
-**Indice 2** : Il n'est **pas demandé** de faire des modifications dans le code des services ! Souvenez-vous qu'il existe plusieurs manières de souscrire à un *topic*
+**Hint 2**: **No modifications** are required in the services' code! Remember that there are several ways to subscribe to a *topic*.
 
-Solution :
+Solution:
 
 {% collapsible %}
 
-Parmi ces deux services, **command-api** est le producteur. Comme les SDKs ne sont pas utilisés, il faut trouver l'appel correct vers son sidecar.
+Among these two services, **command-api** is the producer. As SDKs are not used, the correct call to its sidecar must be found.
 
 ##### Command API
 
-Le service **command-api** est le producteur. Pour pouvoir publier un événement, il a besoin de l'URL vers laquelle publier son contenu.
+The **command-api** service is the producer. To publish an event, it needs the URL to which it publishes its content.
 
-Cette URL peut se trouver dans la [documentation](https://docs.dapr.io/reference/api/pubsub_api/), et est de la forme :
+This URL can be found in the [documentation](https://docs.dapr.io/reference/api/pubsub_api/), and it is in the form:
 
 ```sh
 POST http://localhost:<daprPort>/v1.0/publish/<pubsubname>/<topic>
 ```
 
-où :
+where:
 
-- localhost:3500 est l'adresse du sidecar
-- publish est le préfixe de l'API pub/sub
-- <pubsubname> est le nom du composant de pubsub à utiliser, ici **order-pub-sub**
-- <topic> est le topic dans lequel publier le message. Cela peut être n'importe quelle valeur. Ici nous allons utiliser **orders**
+- localhost:3500 is the address of the sidecar.
+- publish is the prefix of the pub/sub API.
+- <pubsubname> is the name of the pub/sub component to use, here **order-pub-sub**.
+- <topic> is the topic to publish the message to. This can be any value. Here, we will use **orders**.
 
-Une fois les variables remplies, l'URL d'invocation est donc
+Once the variables are filled, the invocation URL is:
 
 ```sh
 http://localhost:3500/v1.0/publish/order-pub-sub/orders
 ```
 
-Il ne reste plus qu'à renseigner cette URL dans les variables d'environnements du fichier `src/Lab2/1-pubsub/docker-compose.yml`
+Now, simply fill in this URL in the environment variables of the `src/Lab2/1-pubsub/docker-compose.yml` file:
 
 ```diff
 ...
@@ -262,48 +262,46 @@ Il ne reste plus qu'à renseigner cette URL dans les variables d'environnements 
 ...
 ```
 
-##### Order processing
+##### Order Processing
 
-**Order-processing** est le consommateur. Il faut donc qu'il souscrive au topic **orders**, celui que **command-api** utilise pour cet exemple.
+**Order-processing** is the consumer. It needs to subscribe to the **orders** topic, which is the one **command-api** uses for this example.
 
-A l'aide des questions précédentes, nous savons qu'il existe deux méthodes pour souscrire à un topic :
+Based on the previous questions, we know there are two methods to subscribe to a topic:
 
-- par le code
-- déclarativement
+- In code
+- Declaratively
 
-Le choix ici est rapide : puisqu'il n'est pas demandé de faire des modifications dans le code des services, nous allons utiliser la méthode **déclarative**.
+The choice here is quick: since no modifications are required in the services' code, we will use the **declarative** method. To do this, we need to [create a yaml representing the subscription](https://docs.dapr.io/developing-applications/building-blocks/pubsub/subscription-methods/) in the `src/Lab2/1-pubsub/components/` directory. The filename does not matter.
 
-Pour cela, nous devons [créer un yaml représentant la souscription](https://docs.dapr.io/developing-applications/building-blocks/pubsub/subscription-methods/) dans le dossier `src/Lab2/1-pubsub/components/`. Le nom du fichier n'a aucune importance.
-
-Ce yaml prend cette forme:
+This yaml takes this form:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
-# Le composant crée est une souscription...
+# The created component is a subscription...
 kind: Subscription
 metadata:
-  # de nom sub-order.
+  # with the name sub-order.
   name: sub-order
-# Cette souscription :
+# This subscription:
 spec:
-  # - utilise le composant dapr de nom "order-pub-sub"
+  # - uses the Dapr component named "order-pub-sub"
   pubsubname: order-pub-sub
-  # - est sur le topic "orders" (le même que celui dans lequel publie command-api)
+  # - is on the "orders" topic (the same one that command-api publishes to in this example)
   topic: orders
-  # - redirige les messages vers le endpoint HTTP "/process-order"
-  # qui est le endpoint ouvert sur le service "order-processing"
+  # - redirects messages to the HTTP endpoint "/process-order"
+  # which is the open endpoint on the "order-processing" service
   route: /process-order
-# Cette souscription ne s'applique que pour le service "order-processing"
+# This subscription applies only to the "order-processing" service
 scopes:
   - order-processing
 ```
 
 {% endcollapsible %}
 
-> **En pratique**: Implémenter le PUB/SUB entre `command-api` et `order-processing`
+> **In Practice**: Implement PUB/SUB between `command-api` and `order-processing`.
 
-Une trace indiquant le succès devrait avoir cette forme
+A successful trace should look like this:
 
 ![expected result](/media/lab2/pubsub/expected-result.png)
 
-**Note 1**: Dans un pattern Pub/Sub, un message est supprimé d'un _topic_ après que tous les consommateurs de ce topic l'ai reçu. Dans une véritable application E-commerce, où les microservices peuvent éventuellement _scaler_, c'est à dire augmenter leur nombre d'instances, les commandes pourraient être traitées plusieurs fois. La bonne approche dans ce genre de cas est d'utiliser une file de message, où le message serait supprimé après le premier traitement.
+**Note 1**: In a Pub/Sub pattern, a message is removed from a _topic_ after all consumers of that topic have received it. In a real e-commerce application, where microservices may potentially scale, meaning increase their number of instances, orders could be processed multiple times. The proper approach in such cases is to use a message queue, where the message would be removed after the first processing.

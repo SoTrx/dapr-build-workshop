@@ -5,71 +5,69 @@ title: Bindings
 parent-id: lab-2
 ---
 
-### Généralités
+### Overview
 
-> **Question généraliste** : Qu'est-ce qu'une architecture orientée services ? Qu'est-ce qu'une architecture orientée événements ? Quelle est la différence entre les deux ?
+> **General Question**: What is a service-oriented architecture? What is an event-driven architecture? What is the difference between the two?
 
 Solution:
 {%collapsible %}
 **/!\ Approximations /!\\**
 
-Une architetcure orientée services (SOA) est une architecture où une tâche à accomplir est répartie entre plusieurs programmes (services) s'appelant les uns les autres. Selon la part de responsabilité de chaque service, on peut les appeler microservices.
+A service-oriented architecture (SOA) is an architecture where a task to be accomplished is distributed among several programs (services) calling each other. Depending on the level of responsibility of each service, they can be referred to as microservices.
 
-Une architecture orientée événement (EDA) est une architecture où la communication entre les composantes d'une application (qui peuvent être des services) est assurée au travers d'événements. Ces événements transitent généralement par des **bus d'événements**.
+An event-driven architecture (EDA) is an architecture where communication between components of an application (which can be services) is ensured through events. These events typically transit through **event buses**.
 
-Deux différences importantes entre les deux :
+Two significant differences between the two:
 
-- **Couplage**
-  - En SOA les services sont couplés plus ou moins fortements (URLs, files de messages...)
-  - En EDA le couplage est lâche, ceux publiant des événements ne savent pas qui les écoutent et réciproquement
-- **Cohérence**:
-  - En SOA quand un service A appelle un Service B, l'état de Service A ne change qu'après le succès de l'appel (ex : HTTP 200)
-  - En EDA quand un service A publie un événement et qu'un service B l'écoute, l'état de service A a déjà changé au moment de la publication, puisqu'il n'y a pas de retour du service B
+- **Coupling**
+  - In SOA, services are more or less tightly coupled (URLs, message queues, etc.).
+  - In EDA, the coupling is loose; those publishing events do not know who is listening, and vice versa.
+- **Coherence**:
+  - In SOA, when service A calls service B, the state of service A changes only after the success of the call (e.g., HTTP 200).
+  - In EDA, when service A publishes an event, and service B listens to it, the state of service A has already changed at the time of publication since there is no return from service B.
 
-Nous avons vu deux manières de pouvoir approcher la communication avec les deux derniers exercices, il reste maintenant la communication externe.
+We have seen two ways to approach communication with the last two exercises; now, there is external communication.
 
 {% endcollapsible %}
 
 ### Dapr
 
-A l'aide de la [documentation](https://docs.dapr.io/developing-applications/building-blocks/bindings/bindings-overview/), nous allons nous intéresser à ces questions
+Using the [documentation](https://docs.dapr.io/developing-applications/building-blocks/bindings/bindings-overview/), let's address these questions.
 
-> **Question** : Quelle est l'utilité d'un _binding_ ?
+> **Question**: What is the purpose of a _binding_?
 
 Solution:
 {%collapsible %}
+A binding is simply a way to interact with a system outside of our application's scope.
 
-Un binding est simplement un moyen d'intéragir avec un système en dehors de notre périmètre applicatif.
+The principle is to bind a name to an external system and be able to call this name in the application's services.
 
-Le principe est simplement de lier un nom à un système externe et de pouvoir appeller ce nom dans les services de l'application.
-
-L'avantage est que cet appel est réalisé de manière transparente, le service appelant ne sait pas (et ne devrait pas savoir) que le système appelé par le binding est externe.
+The advantage is that this call is made transparently; the calling service does not know (and should not know) that the system called by the binding is external.
 
 {% endcollapsible %}
 
-> **Question** : Quelle est la différence entre un _input binding_ et un _output binding_ ? En quoi un _output binding_ est-il différent d'une invocation de service ?
+> **Question**: What is the difference between an _input binding_ and an _output binding_? How is an _output binding_ different from a service invocation?
 
 Solution:
 
 {%collapsible %}
-##### Input binding
+##### Input Binding
 
-Un _input binding_ permet de réagir à un changement d'état d'un système externe.
+An _input binding_ allows reacting to a change of state in an external system.
 
-Un exemple serait de réagir à un nouveau message sur une file de message située sur un autre fournisseur de Cloud
+An example would be reacting to a new message on a message queue located on another cloud provider.
 
-##### Output binding
+##### Output Binding
 
-Un _output binding_ permet de faire réagir un système externe à un changement d'état de notre application
+An _output binding_ allows an external system to react to a change of state in our application.
 
-Un exemple serait de définir un binding vers un fournisseur de mail. Au lieu d'avoir un service dédié dans l'application, ce binding pourrait être appelé par tous les services en ayant besoin.
-L'avantage étant que si le fournisseur de mail vient à changer, seulement le binding sera à mettre à jour, les services resteront inchangés.
+An example would be defining a binding to a mail provider. Instead of having a dedicated service in the application, this binding could be called by all services that need it. The advantage is that if the mail provider changes, only the binding needs to be updated; the services remain unchanged.
 
-#### Différence output binding / invocation de service
+#### Difference between Output Binding and Service Invocation
 
-Une invocation de service est une invocation **synchrone** d'un service **interne**. Ces services peuvent être découverts par [discovery](Une invocation de service est une invocation **synchrone** d'un service **interne**). L'appel peut être sécurisé/authentifié automatiquement par l'utilisation de [Sentry](https://docs.dapr.io/concepts/dapr-services/sentry/)
+A service invocation is a **synchronous** invocation of an **internal** service. These services can be discovered by [discovery](https://docs.dapr.io/developing-applications/building-blocks/service-discovery/service-discovery-overview/). The call can be secured/authenticated automatically by using [Sentry](https://docs.dapr.io/concepts/dapr-services/sentry/).
 
-Un output binding est une invocation **sychrone ou asynchrone** d'un service **externe**. Une partie de la sécurisation des bindings sera forcément laissée au système externe.
+An output binding is a **synchronous or asynchronous** invocation of an **external** service. Part of the security of bindings will necessarily be left to the external system.
 
 {% endcollapsible %}
 
