@@ -4,13 +4,12 @@ sectionclass: h2
 title: Observability
 parent-id: lab-2
 ---
+### Observing Call Chains
 
-### Observer les chaînes d'appels
-
-Il est possible d'utiliser la solution Open-source [Zipkin](https://zipkin.io/) pour tracer les appels entre les services. Il suffit pour ça de configurer Dapr de la manière suivante
+It is possible to use the Open-source solution [Zipkin](https://zipkin.io/) to trace calls between services. To achieve this, configure Dapr as follows:
 
 ```yml
-# Fichier : src/Lab2/4-observability/config/config-tracing.yml
+# File: src/Lab2/4-observability/config/config-tracing.yml
 apiVersion: dapr.io/v1alpha1
 kind: Configuration
 metadata:
@@ -20,17 +19,17 @@ spec:
   tracing:
     samplingRate: "1"
     zipkin:
-      # zipkin:9411 est accessible grâce à docker compose. Il faudrait un service dedié
-      # dans un environnement Kubernetes
+      # zipkin:9411 is accessible through docker compose. A dedicated service
+      # would be required in a Kubernetes environment
       endpointAddress: "http://zipkin:9411/api/v2/spans"
 ```
 
-> **Question**: Comparez le déploiement de l'exercice précédent (`src/Lab2/3-bindings/docker-compose.yml`) et de l'exercice en cours (`src/Lab2/4-observability/docker-compose.yml`). Comment configurer Dapr pour prendre en compte Zipkin ?
+> **Question**: Compare the deployment of the previous exercise (`src/Lab2/3-bindings/docker-compose.yml`) and the current exercise (`src/Lab2/4-observability/docker-compose.yml`). How do you configure Dapr to take Zipkin into account?
 
 Solution:
 {% collapsible %}
 
-En prenant comme exemple le déploiement du service **command-api**.
+Taking the deployment of the **command-api** service as an example:
 
 ```diff
   ############################
@@ -53,36 +52,34 @@ En prenant comme exemple le déploiement du service **command-api**.
     network_mode: "service:command-api"
 ```
 
-En plus du déploiement de Zipkin en lui-même, la configuration de Dapr est appliquée à l'aide de l'argument **-config**. Le fichier de configuration en lui-même est monté dans un volume différent de celui des composants.
+In addition to deploying Zipkin itself, Dapr configuration is applied using the **-config** argument. The configuration file itself is mounted in a volume separate from the components.
 
-Dans un contexte Kubernetes, la configuration serait appliquée à l'aide d'un `kubectl apply -f config-tracing.yml`
+In a Kubernetes context, the configuration would be applied using `kubectl apply -f config-tracing.yml`.
 {% endcollapsible %}
 
-Déployez `src/Lab2/4-observability/docker-compose.yml` à l'aide de la commande suivante
-et passez quelques commandes via l'interface. Naviguez à l'adresse `localhost:9415` pour vous rendre sur l'interface de Zipkin. Dans l'onglet "dépendances", prenez une plage large (ex: [j-1, j+1]) et observez le diagramme.
+Deploy `src/Lab2/4-observability/docker-compose.yml` using the following command and issue some commands through the interface. Navigate to `localhost:9415` to access the Zipkin interface. In the "Dependencies" tab, take a wide range (e.g., [j-1, j+1]) and observe the diagram.
 
-> **Question** : Quels sont les services affichés ? Comment ces services communiquent-ils ?
+> **Question**: Which services are displayed? How do these services communicate?
 
 Solution:
 {% collapsible %}
-Les services affichés sont :
+The displayed services are:
 
 - **command-api**
 - **order-processing**
 - **receipt-generator**
 - **stock-manager**
 
-Communications :
+Communications:
 
-- **command-api** --> **order-processing** : pub/sub
-- **order-processing** --> **receipt-generator** : invocation de service
-- **order-processing** --> **stock-manager** : invocation de service
-
+- **command-api** --> **order-processing**: pub/sub
+- **order-processing** --> **receipt-generator**: service invocation
+- **order-processing** --> **stock-manager**: service invocation
 {% endcollapsible %}
 
-> **Question** : Quels sont le(s) service(s) manquant(s) ? Pourquoi ?
+> **Question**: What is/are the missing service(s)? Why?
 
-**Indication** : Il peut y avoir un certain temps d'attente avant que le diagramme s'affiche. Vous pouvez utiliser l'image ci-dessous si le temps manque.
+**Hint**: There may be some waiting time before the diagram is displayed. You can use the image below if time is limited.
 
 {% collapsible %}
 ![zipkin deps](/media/lab2/observability/zipkin-deps.png)
@@ -90,68 +87,65 @@ Communications :
 
 Solution:
 {% collapsible %}
-Le service manquant est **command-frontend**. C'est en effet le seul service qui ne possède pas de sidecar, étant donné qu'il se trouve côté client.
+The missing service is **command-frontend**. Indeed, it is the only service that does not have a sidecar, as it is located on the client side.
 
-On remarquera aussi que les bindings ne sont pas représentés. En effet ceux-ci font le lien entre notre application et des systèmes externes, qui ne sont donc pas retracés dans un compte rendu sur les chaînes d'appels internes.
+It is also noticeable that bindings are not represented. Bindings connect our application to external systems, which are not traced in a report on internal call chains.
 {% endcollapsible %}
 
-### Observer les métriques
+### Observing Metrics
 
-Un autre axe de l'observabilité est celui des "métriques" des conteneurs. Ces métriques sont des statistiques généralistes qui permettent d'avoir une vue opérationelle sur le cluster.
+Another aspect of observability is the "metrics" of containers. These metrics are general statistics that provide an operational view of the cluster.
 
-Ces statistiques contiennent notamment :
+These statistics include:
 
-- Utilisation CPU des sidecars
-- Utilisation RAM des sidecars
-- Latence moyenne entre chaque service et son sidecar
-- Uptime des sidecars
-- Etats des composants
-- Statistiques des appels HTTP/gRPC
+- CPU usage of sidecars
+- RAM usage of sidecars
+- Average latency between each service and its sidecar
+- Uptime of sidecars
+- Component states
+- HTTP/gRPC call statistics
 
-La liste complète des métriques envoyées par chaque service de Dapr est disponible [ici](https://github.com/dapr/dapr/blob/master/docs/development/dapr-metrics.md)
+The complete list of metrics sent by each Dapr service is available [here](https://github.com/dapr/dapr/blob/master/docs/development/dapr-metrics.md).
 
-Toutes ces métriques sont émises dans [un format ouvert](https://github.com/prometheus/docs/blob/main/content/docs/instrumenting/exposition_formats.md) et peuvent être récupérées et analysées par des outils dédiées tels que [Azure Monitor](https://azure.microsoft.com/fr-fr/services/monitor/#overview), ou [Prometheus](https://prometheus.io).
+All these metrics are emitted in [an open format](https://github.com/prometheus/docs/blob/main/content/docs/instrumenting/exposition_formats.md) and can be retrieved and analyzed by dedicated tools such as [Azure Monitor](https://azure.microsoft.com/en-us/services/monitor/) or [Prometheus](https://prometheus.io).
 
-[Chaque release](https://github.com/dapr/dapr/releases) de Dapr propose également des dashboards [Grafana](https://grafana.com/) préconçus permettants d'avoir un récapitulatif graphique des métriques collectées.
+[Each release](https://github.com/dapr/dapr/releases) of Dapr also provides pre-designed Grafana dashboards for a graphical summary of the collected metrics.
 
 ![grafana dapr doc](/media/lab2/metrics/grafana-doc-example.png)
 
-Un guide est disponible [sur la documentation](https://docs.dapr.io/operations/monitoring/metrics/grafana/) expliquant la mise en place de ces dashboards.
+A guide is available [in the documentation](https://docs.dapr.io/operations/monitoring/metrics/grafana/) explaining the setup of these dashboards.
 
-#### En application (Facultatif)
+#### In Practice (Optional)
 
-> **Important** : Cette section se concentrera sur l'obtention de certaines métriques sur l'exemple fil rouge. Il faut cependant noter que les dashboards grafana fournis par l'équipe Dapr sont conçus pour Kubernetes, certaines métriques ne seront pas disponibles.
+> **Important**: This section will focus on obtaining some metrics on the red thread example. However, it should be noted that the Grafana dashboards provided by the Dapr team are designed for Kubernetes, and some metrics may not be available.
 
-Pour obtenir les métriques de notre application, nous allons donc avoir besoin de rajouter deux services à notre déploiement : Prometheus et Grafana.
+To obtain metrics for our application, we need to add two services to our deployment: Prometheus and Grafana.
 
-Prometheus est un outil d'analyse de séries temporelles (~= variables évoluants sur un axe de temps). Il permet de récupérer et d'aggréger des informations de *n* sources HTTP.
+Prometheus is a time-series analysis tool (~= variables evolving over time). It can retrieve and aggregate information from *n* HTTP sources.
 
-Grafana est un outil de visualisation souvent utilisé en conjonction de Prometheus. Il est capable de créer des _dashboards_ à partir de plusieurs sources de données, offrant alors une visualisation fine des données à l'utilisateur.
+Grafana is a visualization tool often used in conjunction with Prometheus. It can create dashboards from multiple data sources, providing a detailed visualization of the data to the user.
 
-> **En pratique**: Déployez l'application spécifiée par `src/Lab2/5-metrics/docker-compose.yml`. Naviguez maintenant vers Grafana à l'adresse **localhost:9417**, puis choississez le _dashboard_ "dapr-sidecar-dashboard" dans _Dashboards -> Browse_. Qu'observez-vous ?
+> **In Practice**: Deploy the application specified by `src/Lab2/5-metrics/docker-compose.yml`. Now, navigate to Grafana at **localhost:9417**, then choose the "dapr-sidecar-dashboard" dashboard in _Dashboards -> Browse_. What do you observe?
 
-**Indication** : Il vous faudra sûrement réduire la fenêtre d'observation à 5 minutes pour voir une évolution dans les graphiques, ainsi que de lancer quelques commandes de Charentaises
+**Hint**: You may need to reduce the observation window to 5 minutes to see changes in the graphs and issue some Charentaises commands.
 
 Solution:
 {% collapsible %}
 ![sample grafana result](/media/lab2/metrics/sample-grafana-result.png)
 
-On observe que les métriques présentes sont celles des latences et des composants.
+It can be observed that the present metrics include latencies and component metrics.
 
-L'utilisation CPU/RAM n'est elle pas renseignée pour cet exemple. En effet, ces données sont extrapolées à partir des [métriques Kubernetes](https://github.com/kubernetes/kubernetes/blob/master/test/instrumentation/testdata/stable-metrics-list.yaml), qui ne sont pas présentes dans un contexte docker compose
-
+CPU/RAM usage is not specified for this example. Indeed, these data are extrapolated from [Kubernetes metrics](https://github.com/kubernetes/kubernetes/blob/master/test/instrumentation/testdata/stable-metrics-list.yaml), which are not present in a Docker Compose context.
 {% endcollapsible %}
+##### Out of Curiosity: Some Details on Prometheus and Docker Compose
 
-##### Par curiosité : Quelques détails sur Prometheus et docker compose
+The deployment of this section is not explicitly explained but executed. The reason for this is that making Prometheus work with Dapr on Docker Compose requires using a specific configuration that is not suitable for a production scenario.
 
-Le déploiement de cette section n'est pas expliqué à proprement parler, seulement exécuté. La raison à cela est que faire fonctionner Prometheus avec Dapr sur docker compose demande d'utiliser une configuration particulière qui n'a pas sa place dans un scénario de production.
+Indeed, Dapr metrics are emitted by each sidecar on their respective port 9090 (by default). In the context of usage on Kubernetes or without an orchestrator, each sidecar would emit on the same endpoint on port 9090. In that case, it would only be necessary to specify this endpoint in Prometheus.
 
-En effet, les métriques de Dapr sont émises par chaque sidecar sur leur port respectif 9090 (par défaut).
-Dans le contexte d'une utilisation sur Kubernetes ou sans orchestrateur, chaque sidecar émettrait sur le même endpoint sur le port 9090. Il n'y aurait plus qu'alors qu'à renseigner ce endpoint dans Prometheus.
+However, the handling of [docker networks](https://docs.docker.com/network/) in Docker Compose does not allow each sidecar to emit on the same endpoint. To achieve the desired behavior, it is necessary to explicitly list each service in the Prometheus configuration.
 
-Cependant, la gestion des [docker networks](https://docs.docker.com/network/) dans docker compose ne permet pas à chaque sidecar d'émettre sur le même endpoint. Afin de retrouver le comportement voulu, il faut alors lister explicitement chacun des services dans la configuration de Prometheus.
-
-```yml
+```yaml
 global:
   scrape_interval: 15s
 scrape_configs:
@@ -168,7 +162,7 @@ scrape_configs:
           ]
 ```
 
-De plus, chaque couple (service, sidecar) partage une même interface réseau,  il faut donc de manière assez contre-intuitive exposer le port 9090 du service pour atteindre ce même port sur le sidecar.
+Additionally, each (service, sidecar) pair shares the same network interface, so it is counterintuitively necessary to expose port 9090 of the service to reach this same port on the sidecar.
 
 ```diff
   order-processing:
@@ -182,7 +176,7 @@ De plus, chaque couple (service, sidecar) partage une même interface réseau,  
     network_mode: "service:order-processing"
 ```
 
-Une fois Prometheus configuré, Graphana lui ne pose pas de problème particulier.
+Once Prometheus is configured, Grafana does not pose any particular issues.
 
 ```ini
 [auth]
@@ -196,101 +190,101 @@ enabled = true
 org_role = Admin
 ```
 
-### Observer les logs
+### Observing Logs
 
-Le dernier axe de l'observabilité que nous allons aborder est celui des logs. La possibilité de stocker et d'analyser les logs est une partie intégrante de la vie d'une application distribuée – peut être même encore plus que les parties précédentes – et il est courant que chaque développeur ait déjà une solution plus ou moins managée avec laquelle il est familier.
+The last aspect of observability we will address is log observation. The ability to store and analyze logs is an integral part of the life of a distributed application – perhaps even more so than the previous aspects – and it is common for each developer to already have a more or less managed solution they are familiar with.
 
-Il n'est donc pas question ici de discuter de la manière dont les logs des services en eux-mêmes sont traités, cette partie va plutôt se concentrer seulement sur **les logs des sidecars**.
+So, there is no discussion here about how the logs of the services themselves are treated; this part will focus only on **the logs of the sidecars**.
 
-Le support utilisé pour cet exemple sera une pile ELK (Elasticsearch, Logstash, Kibana). Ce n'est cependant pas la seule solution supportée par Dapr.
+The support used for this example will be an ELK stack (Elasticsearch, Logstash, Kibana). However, this is not the only solution supported by Dapr.
 
-> **En pratique**: Déployez l'application spécifiée par `src/Lab2/6-logs/docker-compose.yml`. Naviguez maintenant vers Kibana à l'adresse **localhost:5601**
+> **In Practice**: Deploy the application specified by `src/Lab2/6-logs/docker-compose.yml`. Now navigate to Kibana at **localhost:5601**.
 
-**Note**: Il est possible que le déploiement échoue avec une erreur de type _Dial [1]::24224_, relancez simplement la commande dans ce cas
+**Note**: The deployment may fail with a _Dial [1]::24224_ error; simply rerun the command in that case.
 
-L'instance de Kibana est déjà configurée pour recevoir les logs des sidecars (voir la partie [**Détails**](#détails) ci-dessous). Il faut maintenant configurer cette instance pour les analyser
+The Kibana instance is already configured to receive logs from sidecars (see the [**Details**](#details) section below). Now, you need to configure this instance to analyze them.
 
-Pour cela:
+To do this:
 
-- Une fois sur l'interface, choississez l'option _Explore on my own_ quand il sera proposé d'ajouter des intégrations
-- Cliquez en haut à gauche sur le menu (**☰**), puis sur _Stack Management_ dans la section _Management_
-- Une fois sur la nouvelle page, dans le panneau de gauche, cliquez sur _Data View_ dans la section _Kibana_
-- Cliquez sur _Create Data View_
-- Il sera demandé de renseigner un index. Il ne devrait n'y en avoir qu'un seul disponible de la forme **fluent-\<\>**. Renseignez "fluent\*" dans le champ de gauche
-- Cliquez sur _Create Data View_
+- Once on the interface, choose the option _Explore on my own_ when prompted to add integrations.
+- Click on the menu in the top left (**☰**) and then on _Stack Management_ in the _Management_ section.
+- Once on the new page, in the left panel, click on _Data View_ in the _Kibana_ section.
+- Click on _Create Data View_.
+- You will be asked to enter an index. There should be only one available in the form **fluent-\<\>**. Enter "fluent\*" in the left field.
+- Click on _Create Data View_.
 
-En créant cette vue, vous aurez la liste des variables comprises dans les logs.
+By creating this view, you will have a list of variables included in the logs.
 
-> **Question**: En comparant les variables affichées avec [le format de logs de Dapr](https://docs.dapr.io/operations/monitoring/logging/logs/#log-schema), quelles différences remarquez-vous ? Pourquoi ?
+> **Question**: Comparing the displayed variables with [the Dapr log format](https://docs.dapr.io/operations/monitoring/logging/logs/#log-schema), what differences do you notice? Why?
 
-Solution :
+**Solution**:
 
 {% collapsible %}
 ![Dapr log items list](/media/lab2/logs/log-items-full.png)
 
-Par rapport au format de Dapr, il y a de nombreuses variables supplémentaires. Ces variables proviennent du [format ECS](https://www.elastic.co/guide/en/observability/8.3/logs-app-fields.html) utilisé.  
+Compared to the Dapr format, there are many additional variables. These variables come from the used [ECS format](https://www.elastic.co/guide/en/observability/8.3/logs-app-fields.html).
 {% endcollapsible %}
 
-Il suffit maintenant pour consulter les logs de cliquer à nouveau sur **☰** puis de cliquer sur _Discover_ dans la section _Analytics_.
+Now, to view the logs, click again on **☰** and then click on _Discover_ in the _Analytics_ section.
 
-**Remarque** : On remarque des doublons dans les attributs, suffixés par ".keyword". Il s'aggit d'une spécificité de Elasticsearch : Lors de la rencontre d'une chaîne de charactères, Elasticsearch va l'indexer à la fois en tant que type _TEXT_, champ dans lequel il est possible de rechercher un sous-texte, et en tant que type _KEYWORD_, non indexé. Il est cependant possible de spécifier quel comportement adopter pour chacun des champs.
+**Note**: Duplicates with ".keyword" suffixes are noticed in the attributes. This is an Elasticsearch specificity: when encountering a string, Elasticsearch will index it both as _TEXT_, a field in which it is possible to search for a substring, and as _KEYWORD_, not indexed. However, it is possible to specify the behavior for each of the fields.
 
-> **En pratique** : Isolez les logs du conteneur **order-processing**. Commentez les attributs
+> **In Practice**: Isolate the logs of the **order-processing** container. Comment on the attributes.
 
 {% collapsible %}
 
-Pour isoler les logs du conteneur **order-processing**, il suffit de chercher "app-id : order-processing" dans la barre de recherche.
+To isolate the logs of the **order-processing** container, simply search for "app-id: order-processing" in the search bar.
 
-Une ligne de log a cette forme
+A log line has this format:
 
 ```jsonc
-// Note : Les attributs .keyword sont ignorés
+// Note: .keyword attributes are ignored
 {
   "_index": "fluentd-20220704",
   "_id": "sepuyYEB3S4ZspuilsDO",
   "_version": 1,
   "_score": null,
   "fields": {
-    // Payload de Dapr. On remarque que l'on retrouve chacun de ces attributs
-    // séparément dans l'objet "fields". C'est un effet de la configuration de FluentD
-    // qui parse le JSON de cet attribut et l'intègre à l'objet parent
+    // Dapr payload. Note that each of these attributes is
+    // separately found in the "fields" object. This is an effect of FluentD configuration
+    // that parses the JSON of this attribute and integrates it into the parent object
     "log": [
       "{\"app_id\":\"order-processing\",\"instance\":\"d900866e4786\",\"level\":\"info\",\"msg\":\"application configuration loaded\",\"scope\":\"dapr.runtime\",\"time\":\"2022-07-04T13:37:51.345159194Z\",\"type\":\"log\",\"ver\":\"edge\"}"
     ],
-    // Payload -> Descripteur de fichier d'origine
+    // Payload -> Original file descriptor
     "source": ["stdout"],
-    // Payload -> Message de log à proprement parler
+    // Payload -> Actual log message
     "msg": ["application configuration loaded"],
     // Payload -> Log type
     "type": ["log"],
     "scope": ["dapr.runtime"],
-    // Payload -> APP-id du service ayant emis le log
+    // Payload -> APP-id of the service emitting the log
     "app_id": ["order-processing"],
-    // Payload ->Version de Dapr
+    // Payload -> Dapr version
     "ver": ["edge"],
-    // Payload ->Log level
+    // Payload -> Log level
     "level": ["info"],
-    // Meta -> Temps de reception de la ligne de log
+    // Meta -> Log reception time in timestamp format for log sorting
     "@timestamp": ["2022-07-04T13:37:51.345Z"],
-    // Meta -> Nom du conteneur vu par docker compose
+    // Meta -> Container name as seen by docker compose
     "container_name": ["/6-logs_order-processing-dapr_1"],
-    // Meta -> UUID du conteneur docker
+    // Meta -> Docker container UUID
     "container_id": [
       "1f8457fe7a405ecf8443304558aedbeaa4bd9eff0a45ecd2b7aa24caf4879e73"
     ]
   },
-  // Date de réception en format timestamp pour trier les logs
+  // Reception date in timestamp format to sort logs
   "sort": [1656941871345]
 }
 ```
 
 {% endcollapsible %}
 
-#### Détails
+#### Details
 
-La manière dont les logs sont envoyés vers Kibana est d'utiliser [FluentD](https://docs.fluentd.org/) en tant que [logging driver](https://docs.docker.com/config/containers/logging/configure/).
+The way logs are sent to Kibana involves using [FluentD](https://docs.fluentd.org/) as the [logging driver](https://docs.docker.com/config/containers/logging/configure/).
 
-Dapr est ensuite configuré pour afficher les logs en format JSON sur stdout avec l'option de commande `-log-as-json`.
+Dapr is then configured to display logs in JSON format on stdout with the `-log-as-json` command option.
 
 ```diff
   command-api-dapr:
@@ -309,6 +303,6 @@ Dapr est ensuite configuré pour afficher les logs en format JSON sur stdout ave
 +       tag: httpd.access
 ```
 
-Cette méthode étant propre à l'orchestrateur docker compose, elle n'est pas détaillée dans le coeur de l'activité.
+This method, specific to the Docker Compose orchestrator, is not detailed in the core activity.
 
-Sur Kubernetes le déploiement serait toutefois similaire. Il suffirait en effet de déployer FluentD sur le cluster et d'ajouter l'annotation `log-as-json` au déploiement des services pour obtenir le même resultat. Un tutoriel complet est disponible [sur le site de Dapr](https://docs.dapr.io/operations/monitoring/logging/fluentd/).
+On Kubernetes, however, the deployment would be similar. It would be sufficient to deploy FluentD on the cluster and add the `log-as-json` annotation to the deployment of services to achieve the same result. A complete tutorial is available [on the Dapr website](https://docs.dapr.io/operations/monitoring/logging/fluentd/).

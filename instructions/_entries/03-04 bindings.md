@@ -70,108 +70,105 @@ A service invocation is a **synchronous** invocation of an **internal** service.
 An output binding is a **synchronous or asynchronous** invocation of an **external** service. Part of the security of bindings will necessarily be left to the external system.
 
 {% endcollapsible %}
+### In Application
 
-### En application
+> **Note**: The new version of the application is now located in `src/Lab2/3-bindings`
 
-> **Note** : La nouvelle version de l'application se trouve désormais dans `src/Lab2/3-bindings`
+Let's revisit our main theme once again. This time, two new requirements:
 
+1. We now need to interface with the information system of the supplier that replenishes our stock. The **stock-manager** service has a specific HTTP POST endpoint _/newproduct_.
 
-Revenons une fois encore à notre fil rouge. Cette fois-ci, deux nouvelles demandes:
+   To simulate this, we can use a CRON job. If it's possible to use it directly in the application, we can use a specific Dapr binding for that.
 
-- Il faut maintenant pouvoir s'interfacer avec le système d'informations du fournisseur qui réapprovisionne notre stock. Le service **stock-manager** a un endpoint HTTP POST specifique _/newproduct_
+2. The parent company of the enterprise has a dedicated mailing service. The **receipt-generator** service must be able to send emails to customers to confirm pre-orders. The mailing service is available at the following URL:
 
-Pour simuler ça, nous pouvons utiliser une tâche CRON. S'il est possible de l'utiliser directement dans l'application, nous pouvons utiliser un binding Dapr spécifique pour ça.
+   ```shell
+   # The "sig" parameter in the URL is intentionally incorrect; request the correct one on the workshop day
+   https://prod-116.westeurope.logic.azure.com/workflows/0ceb8e48b2254276923acaf348229260/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=lTON4ZTisB1iGA-6rJAlkoC8miHB9kyJp3No
+   ```
 
-- La maison mère de l'entreprise dispose d'un service de mailing dedié. Le service **receipt-generator** doit être capable d'envoyer des mails aux clients pour confirmer les pré-commandes. Le service de mailing est disponible à l'URL suivante :
+   As both systems we need to interact with are external, we choose to use bindings.
 
-```shell
-# Le paramètre "sig" de l'URL est volontairement faux, demandez la correction le jour du workshop
-https://prod-116.westeurope.logic.azure.com/workflows/0ceb8e48b2254276923acaf348229260/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=lTON4ZTisB1iGA-6rJAlkoC8miHB9kyJp3No
-```
-
-Comme les deux systèmes avec lesquels nous devons intéragir sont externes, nous choississons d'utiliser des bindings.
-
-La cible est donc la suivante :
+The target setup is as follows:
 
 ![Step 3](/media/lab2/bindings/app-step-3-bindings.png)
 
-> **Question** : Quel binding utiliser pour le premier besoin ? Quelle est l'impact du nom du endpoint HTTP POST de reception de produit (**newproduct**) sur le binding ?
+> **Question**: Which binding should be used for the first requirement? What is the impact of the name of the HTTP POST endpoint for product reception (**newproduct**) on the binding?
 
-Solution :
+**Solution**:
 {%collapsible %}
-Etant donné que nous voulons **réagir à un événement lancé par un système externe**, nous devons utiliser un _input binding_.
+Since we want to **react to an event triggered by an external system**, we need to use an _input binding_.
 
-Pour simuler une tâche CRON, nous pouvons utiliser le [binding associé](https://docs.dapr.io/reference/components-reference/supported-bindings/cron/)
+To simulate a CRON job, we can use the [associated binding](https://docs.dapr.io/reference/components-reference/supported-bindings/cron/).
 
-Le endpoint HTTP s'appelant newproduct, la propriété `metadata.name` du binding devra également s'appeller newproduct.
+As the HTTP endpoint is named newproduct, the `metadata.name` property of the binding should also be named newproduct.
 
 {% endcollapsible %}
 
-> **Question** : Quel binding utiliser pour le deuxième besoin ?
+> **Question**: Which binding should be used for the second requirement?
 
-Solution :
+**Solution**:
 {%collapsible %}
-Etant donné que nous voulons **faire parvenir un événement à système externe**, nous devons utiliser un _output binding_.
+Since we want to **send an event to an external system**, we need to use an _output binding_.
 
-Comme le système utilisé par le service externe est une simple requête HTTP, nous pouvons utiliser le [binding HTTP](https://docs.dapr.io/reference/components-reference/supported-bindings/http/)
+As the system used by the external service is a simple HTTP request, we can use the [HTTP binding](https://docs.dapr.io/reference/components-reference/supported-bindings/http/).
 
 {% endcollapsible %}
 
-> **En pratique** : Mettez en place les deux bindings et vérifiez leur fonctionnement. Pour vérifier que le service de mailing fonctionne, vous pouvez remplir la variable d'environnement **MAIL_TO** du service **receipt-generator** avec un email valide. L'expediteur du mail sera une adresse gmail avec l'objet "Validated Command"
+> **In Practice**: Implement both bindings and verify their functionality. To check if the mailing service works, you can fill in the **MAIL_TO** environment variable of the **receipt-generator** service with a valid email. The sender of the email will be a Gmail address with the subject "Validated Command."
 
-**Important**: Le nom du binding devra être `mail`, car c'est celui qui est appelé dans le code de **receipt-generator**
+**Important**: The name of the binding should be `mail` because that is the one called in the code of **receipt-generator**.
 
-Une trace indiquant le succès devrait avoir cette forme :
+A successful trace should look like this:
 
 ![Expected result](/media/lab2/bindings/expected-result.png)
 
-Solution :
+**Solution**:
 {%collapsible %}
 
-##### Output binding : mail
+##### Output Binding: mail
 
-L'output binding à utiliser pour le mail est donc un simple binding http. Il suffit donc de créer un nouveau fichier yaml dans le dossier `src/Lab2/3-bindings/components`.
+The output binding to use for the email is a simple HTTP binding. Create a new YAML file in the `src/Lab2/3-bindings/components` folder.
 
-```yml
+```yaml
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  # Important : Comme indiqué plus haut, le nom du binding doit être "mail"
+  # Important: As mentioned above, the binding name should be "mail"
   name: mail
 spec:
   type: bindings.http
   version: v1
   metadata:
-    # On utilise l'URL d'invocation du service externe (attention à la clef)
+    # Use the invocation URL of the external service (be cautious with the API key)
     - name: url
-      value: https://prod-116.westeurope.logic.azure.com/workflows/0ceb8e48b2254276923acaf348229260/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=<clef-api>
+      value: https://prod-116.westeurope.logic.azure.com/workflows/0ceb8e48b2254276923acaf348229260/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=<api-key>
 ```
 
-##### Input binding : CRON
+##### Input Binding: CRON
 
-L'input binding à utiliser est un CRON.
-On crée donc encore une fois un nouveau fichier yaml dans le dossier `src/Lab2/3-bindings/components`.
+The input binding to use is a CRON. Create a new YAML file in the `src/Lab2/3-bindings/components` folder.
 
-```yml
+```yaml
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  # Important : Comme indiqué ci-dessus, le nom du binding correspondra au
-  # nom de la méthode appelée sur les services
+  # Important: As mentioned above, the binding name will correspond to
+  # the method called on the services
   name: newproduct
 spec:
   type: bindings.cron
   version: v1
   metadata:
-    # La valeur du CRON n'a pas d'importance
+    # The value of the CRON schedule is not crucial for this example
     - name: schedule
       value: "@every 15s"
 ```
 
 {% endcollapsible %}
 
-### Par curiosité: Le "système externe"
+### Out of Curiosity: The "External System"
 
-Le système "externe" présenté est en fait la [LogicApp](https://docs.microsoft.com/fr-fr/azure/logic-apps/logic-apps-overview) suivante:
+The presented "external" system is actually the following [LogicApp](https://docs.microsoft.com/fr-fr/azure/logic-apps/logic-apps-overview):
 
 ![Mailing](/media/lab2/bindings/logic-app-mailing.png)
