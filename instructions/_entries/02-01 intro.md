@@ -1,8 +1,8 @@
 ---
 sectionid: lab1-intro
 sectionclass: h2
-title: Contexte
+title: Context
 parent-id: lab-1
 ---
 
-Cette première activité a pour but de montrer l'intérêt du découplage applicatif.
+This initial activity aims to demonstrate the value of application decoupling.

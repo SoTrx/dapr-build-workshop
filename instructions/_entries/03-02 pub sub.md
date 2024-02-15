@@ -155,7 +155,7 @@ Voici l'état actuel de l'application de pré-commande fil rouge :
 
 Le frontend va être la vitrine de notre site, qui s'exécute sur le navigateur du client (raison pour laquelle il n'a pas de sidecar Dapr rattaché) et l'API la porte d'entrée de l'architecture du backend.
 
-> **Note** : Cette nouvelle application se trouve dans le dossier `src/Lab2/1-pub-sub`
+> **Note** : Cette nouvelle application se trouve dans le dossier `src/Lab2/1-pubsub`
 
 Pour démarrer l'application, il suffit de lancer la commande
 
@@ -177,7 +177,7 @@ Voici donc la cible:
 
 A noter:
 
-- Chaque texte en violet est une variable d'environnement à remplir dans `src/Lab2/1-pub-sub/docker-compose.yml`
+- Chaque texte en violet est une variable d'environnement à remplir dans `src/Lab2/1-pubsub/docker-compose.yml`
   - **PUB_URL** : URL appelée par le service **command-api** pour publier un message. Il s'agit d'un appel vers son sidecar, il sera donc préfixé par _http://localhost:3500_.
   - **COMMAND_API_HOST** : URL du service **command-api** au regard de **command-frontend**. Cette valeur est déjà pré-remplie
 - **/process-order** : Endpoint HTTP POST de traitement de message. Les nouveaux messages doivent être redirigés vers cette URL.
@@ -247,7 +247,7 @@ Une fois les variables remplies, l'URL d'invocation est donc
 http://localhost:3500/v1.0/publish/order-pub-sub/orders
 ```
 
-Il ne reste plus qu'à renseigner cette URL dans les variables d'environnements du fichier `src/Lab2/1-pub-sub/docker-compose.yml`
+Il ne reste plus qu'à renseigner cette URL dans les variables d'environnements du fichier `src/Lab2/1-pubsub/docker-compose.yml`
 
 ```diff
 ...
@@ -273,7 +273,7 @@ A l'aide des questions précédentes, nous savons qu'il existe deux méthodes po
 
 Le choix ici est rapide : puisqu'il n'est pas demandé de faire des modifications dans le code des services, nous allons utiliser la méthode **déclarative**.
 
-Pour cela, nous devons [créer un yaml représentant la souscription](https://docs.dapr.io/developing-applications/building-blocks/pubsub/subscription-methods/) dans le dossier `src/Lab2/1-pub-sub/components/`. Le nom du fichier n'a aucune importance.
+Pour cela, nous devons [créer un yaml représentant la souscription](https://docs.dapr.io/developing-applications/building-blocks/pubsub/subscription-methods/) dans le dossier `src/Lab2/1-pubsub/components/`. Le nom du fichier n'a aucune importance.
 
 Ce yaml prend cette forme:
 

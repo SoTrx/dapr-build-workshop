@@ -5,30 +5,30 @@ title: Une première application
 parent-id: lab-1
 ---
 
-> **Note** : Les fichiers utilisés dans cette première application se trouvent dans le dossier `src/Lab1/1-decoupling-direct`
+> **Note**: The files used in this initial application are located in the `src/Lab1/1-decoupling/direct` folder.
 
-### Une première application
+### A First Application
 
-Le support de cette première activité sera l'application représentée ci-dessous
+The focus of this first activity is the application represented below.
 
-![Première app](/media/lab1/first-app-vanilla.png)
+![First App](/media/lab1/first-app-vanilla.png)
 
-Cette application est constituée de trois parties:
+This application consists of three parts:
 
-- Une instance de Redis pour permettre un stockage d'état.
-- Un service Node qui stocke un état dans Redis
-- Un service Python qui génère et envoie un état au service Node toutes les secondes
+- An instance of Redis to allow state storage.
+- A Node service that stores state in Redis.
+- A Python service that generates and sends state to the Node service every second.
 
-### Démarrer l'application en local
+### Starting the Application Locally
 
-L'application peut être executée en local à l'aide de docker-compose.
+The application can be run locally using docker-compose.
 
 ```shell
-    # L'option "--no-attach" permet de cacher les logs de redis
-    # En cas de problème, elle peut être enlevée pour obtenir plus de détails
+    # The "--no-attach" option hides the Redis logs
+    # If there is an issue, it can be removed to get more details
     docker-compose up --no-attach redis
 ```
 
-> **En pratique** : Démarrez l'application. Vérifiez que vous obtenez une trace de cette forme:
+> **Practical Exercise**: Start the application. Verify that you get a trace like the one below:
 
-![Résultats](/media/lab1/first-app-vanilla-result.png)
+![Results](/media/lab1/first-app-vanilla-result.png)

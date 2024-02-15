@@ -5,7 +5,6 @@ title: Conclusion
 parent-id: lab-1
 ---
 
-Ce premier exercice permet de se familiariser avec le concept de base de Dapr, le découplage d'une architecture.
-Ce découplage est déjà un avantage en terme de mise à jour d'une application, mais ce n'est pas la seule fonctionnalité de Dapr.
+This initial exercise allows you to become acquainted with the fundamental concept of Dapr: the decoupling of an architecture. This decoupling is already advantageous in terms of updating an application, but it is not the only functionality of Dapr.
 
-Dans la suite nous allons explorer plus en détails ces fonctionnalités supplémentaires.
+In the following, we will delve into these additional features in more detail.

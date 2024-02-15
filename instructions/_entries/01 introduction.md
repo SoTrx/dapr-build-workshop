@@ -6,4 +6,4 @@ type: nocount
 is-parent: yes
 ---
 
-Ce document est un support pour une **introduction à Dapr et ses concepts**. Au travers de différentes activités, le but sera de découvrir les fonctionnalités de Dapr, tout d'abord en isolation, et ensuite en utilisant son intégration dans **[Azure Container Apps](https://azure.microsoft.com/en-us/services/container-apps/)**.
+This document serves as a guide for an **introduction to Dapr and its concepts**. Through various activities, the goal is to explore the features of Dapr, initially in isolation, and then by using its integration with **[Azure Container Apps](https://azure.microsoft.com/en-us/services/container-apps/)**.
