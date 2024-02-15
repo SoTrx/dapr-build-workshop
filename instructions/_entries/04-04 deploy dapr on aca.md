@@ -1,7 +1,7 @@
 ---
 sectionid: lab3-deploy-dapr-on-aca
 sectionclass: h2
-title: Déployer une application Dapr sur ACA
+title: Deploy a Dapr app on ACA
 parent-id: lab-3
 ---
 

@@ -1,7 +1,7 @@
 ---
 sectionid: lab2-testing
 sectionclass: h2
-title: (Avancé) Tester avec Dapr
+title: (Advanced) Test with Dapr
 parent-id: lab-2
 ---
 

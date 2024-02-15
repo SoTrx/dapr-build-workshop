@@ -1,7 +1,7 @@
 ---
 sectionid: lab3-hello-world-aca
 sectionclass: h2
-title: Une première application sur ACA
+title: A first app on ACA
 parent-id: lab-3
 ---
 

@@ -1,6 +1,6 @@
 ---
 sectionid: cleaning
 sectionclass: h1
-title: Nettoyage
+title: Cleaning
 is-parent: yes
 ---

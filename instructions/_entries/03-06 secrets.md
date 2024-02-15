@@ -1,7 +1,7 @@
 ---
 sectionid: lab2-secrets
 sectionclass: h2
-title: La gestion des secrets
+title: Secret management
 parent-id: lab-2
 ---
 
