@@ -5,175 +5,170 @@ title: Bindings
 parent-id: lab-2
 ---
 
-### Généralités
+### Overview
 
-> **Question généraliste** : Qu'est-ce qu'une architecture orientée services ? Qu'est-ce qu'une architecture orientée événements ? Quelle est la différence entre les deux ?
+> **General Question**: What is a service-oriented architecture? What is an event-driven architecture? What is the difference between the two?
 
 Solution:
 {%collapsible %}
 **/!\ Approximations /!\\**
 
-Une architetcure orientée services (SOA) est une architecture où une tâche à accomplir est répartie entre plusieurs programmes (services) s'appelant les uns les autres. Selon la part de responsabilité de chaque service, on peut les appeler microservices.
+A service-oriented architecture (SOA) is an architecture where a task to be accomplished is distributed among several programs (services) calling each other. Depending on the level of responsibility of each service, they can be referred to as microservices.
 
-Une architecture orientée événement (EDA) est une architecture où la communication entre les composantes d'une application (qui peuvent être des services) est assurée au travers d'événements. Ces événements transitent généralement par des **bus d'événements**.
+An event-driven architecture (EDA) is an architecture where communication between components of an application (which can be services) is ensured through events. These events typically transit through **event buses**.
 
-Deux différences importantes entre les deux :
+Two significant differences between the two:
 
-- **Couplage**
-  - En SOA les services sont couplés plus ou moins fortements (URLs, files de messages...)
-  - En EDA le couplage est lâche, ceux publiant des événements ne savent pas qui les écoutent et réciproquement
-- **Cohérence**:
-  - En SOA quand un service A appelle un Service B, l'état de Service A ne change qu'après le succès de l'appel (ex : HTTP 200)
-  - En EDA quand un service A publie un événement et qu'un service B l'écoute, l'état de service A a déjà changé au moment de la publication, puisqu'il n'y a pas de retour du service B
+- **Coupling**
+  - In SOA, services are more or less tightly coupled (URLs, message queues, etc.).
+  - In EDA, the coupling is loose; those publishing events do not know who is listening, and vice versa.
+- **Coherence**:
+  - In SOA, when service A calls service B, the state of service A changes only after the success of the call (e.g., HTTP 200).
+  - In EDA, when service A publishes an event, and service B listens to it, the state of service A has already changed at the time of publication since there is no return from service B.
 
-Nous avons vu deux manières de pouvoir approcher la communication avec les deux derniers exercices, il reste maintenant la communication externe.
+We have seen two ways to approach communication with the last two exercises; now, there is external communication.
 
 {% endcollapsible %}
 
 ### Dapr
 
-A l'aide de la [documentation](https://docs.dapr.io/developing-applications/building-blocks/bindings/bindings-overview/), nous allons nous intéresser à ces questions
+Using the [documentation](https://docs.dapr.io/developing-applications/building-blocks/bindings/bindings-overview/), let's address these questions.
 
-> **Question** : Quelle est l'utilité d'un _binding_ ?
+> **Question**: What is the purpose of a _binding_?
 
 Solution:
 {%collapsible %}
+A binding is simply a way to interact with a system outside of our application's scope.
 
-Un binding est simplement un moyen d'intéragir avec un système en dehors de notre périmètre applicatif.
+The principle is to bind a name to an external system and be able to call this name in the application's services.
 
-Le principe est simplement de lier un nom à un système externe et de pouvoir appeller ce nom dans les services de l'application.
-
-L'avantage est que cet appel est réalisé de manière transparente, le service appelant ne sait pas (et ne devrait pas savoir) que le système appelé par le binding est externe.
+The advantage is that this call is made transparently; the calling service does not know (and should not know) that the system called by the binding is external.
 
 {% endcollapsible %}
 
-> **Question** : Quelle est la différence entre un _input binding_ et un _output binding_ ? En quoi un _output binding_ est-il différent d'une invocation de service ?
+> **Question**: What is the difference between an _input binding_ and an _output binding_? How is an _output binding_ different from a service invocation?
 
 Solution:
 
 {%collapsible %}
-##### Input binding
+##### Input Binding
 
-Un _input binding_ permet de réagir à un changement d'état d'un système externe.
+An _input binding_ allows reacting to a change of state in an external system.
 
-Un exemple serait de réagir à un nouveau message sur une file de message située sur un autre fournisseur de Cloud
+An example would be reacting to a new message on a message queue located on another cloud provider.
 
-##### Output binding
+##### Output Binding
 
-Un _output binding_ permet de faire réagir un système externe à un changement d'état de notre application
+An _output binding_ allows an external system to react to a change of state in our application.
 
-Un exemple serait de définir un binding vers un fournisseur de mail. Au lieu d'avoir un service dédié dans l'application, ce binding pourrait être appelé par tous les services en ayant besoin.
-L'avantage étant que si le fournisseur de mail vient à changer, seulement le binding sera à mettre à jour, les services resteront inchangés.
+An example would be defining a binding to a mail provider. Instead of having a dedicated service in the application, this binding could be called by all services that need it. The advantage is that if the mail provider changes, only the binding needs to be updated; the services remain unchanged.
 
-#### Différence output binding / invocation de service
+#### Difference between Output Binding and Service Invocation
 
-Une invocation de service est une invocation **synchrone** d'un service **interne**. Ces services peuvent être découverts par [discovery](Une invocation de service est une invocation **synchrone** d'un service **interne**). L'appel peut être sécurisé/authentifié automatiquement par l'utilisation de [Sentry](https://docs.dapr.io/concepts/dapr-services/sentry/)
+A service invocation is a **synchronous** invocation of an **internal** service. These services can be discovered by [discovery](https://docs.dapr.io/developing-applications/building-blocks/service-discovery/service-discovery-overview/). The call can be secured/authenticated automatically by using [Sentry](https://docs.dapr.io/concepts/dapr-services/sentry/).
 
-Un output binding est une invocation **sychrone ou asynchrone** d'un service **externe**. Une partie de la sécurisation des bindings sera forcément laissée au système externe.
+An output binding is a **synchronous or asynchronous** invocation of an **external** service. Part of the security of bindings will necessarily be left to the external system.
 
 {% endcollapsible %}
+### In Application
 
-### En application
+> **Note**: The new version of the application is now located in `src/Lab2/3-bindings`
 
-> **Note** : La nouvelle version de l'application se trouve désormais dans `src/Lab2/3-bindings`
+Let's revisit our main theme once again. This time, two new requirements:
 
+1. We now need to interface with the information system of the supplier that replenishes our stock. The **stock-manager** service has a specific HTTP POST endpoint _/newproduct_.
 
-Revenons une fois encore à notre fil rouge. Cette fois-ci, deux nouvelles demandes:
+   To simulate this, we can use a CRON job. If it's possible to use it directly in the application, we can use a specific Dapr binding for that.
 
-- Il faut maintenant pouvoir s'interfacer avec le système d'informations du fournisseur qui réapprovisionne notre stock. Le service **stock-manager** a un endpoint HTTP POST specifique _/newproduct_
+2. The parent company of the enterprise has a dedicated mailing service. The **receipt-generator** service must be able to send emails to customers to confirm pre-orders. The mailing service is available at the following URL:
 
-Pour simuler ça, nous pouvons utiliser une tâche CRON. S'il est possible de l'utiliser directement dans l'application, nous pouvons utiliser un binding Dapr spécifique pour ça.
+   ```shell
+   # The "sig" parameter in the URL is intentionally incorrect; request the correct one on the workshop day
+   https://prod-116.westeurope.logic.azure.com/workflows/0ceb8e48b2254276923acaf348229260/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=lTON4ZTisB1iGA-6rJAlkoC8miHB9kyJp3No
+   ```
 
-- La maison mère de l'entreprise dispose d'un service de mailing dedié. Le service **receipt-generator** doit être capable d'envoyer des mails aux clients pour confirmer les pré-commandes. Le service de mailing est disponible à l'URL suivante :
+   As both systems we need to interact with are external, we choose to use bindings.
 
-```shell
-# Le paramètre "sig" de l'URL est volontairement faux, demandez la correction le jour du workshop
-https://prod-116.westeurope.logic.azure.com/workflows/0ceb8e48b2254276923acaf348229260/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=lTON4ZTisB1iGA-6rJAlkoC8miHB9kyJp3No
-```
-
-Comme les deux systèmes avec lesquels nous devons intéragir sont externes, nous choississons d'utiliser des bindings.
-
-La cible est donc la suivante :
+The target setup is as follows:
 
 ![Step 3](/media/lab2/bindings/app-step-3-bindings.png)
 
-> **Question** : Quel binding utiliser pour le premier besoin ? Quelle est l'impact du nom du endpoint HTTP POST de reception de produit (**newproduct**) sur le binding ?
+> **Question**: Which binding should be used for the first requirement? What is the impact of the name of the HTTP POST endpoint for product reception (**newproduct**) on the binding?
 
-Solution :
+**Solution**:
 {%collapsible %}
-Etant donné que nous voulons **réagir à un événement lancé par un système externe**, nous devons utiliser un _input binding_.
+Since we want to **react to an event triggered by an external system**, we need to use an _input binding_.
 
-Pour simuler une tâche CRON, nous pouvons utiliser le [binding associé](https://docs.dapr.io/reference/components-reference/supported-bindings/cron/)
+To simulate a CRON job, we can use the [associated binding](https://docs.dapr.io/reference/components-reference/supported-bindings/cron/).
 
-Le endpoint HTTP s'appelant newproduct, la propriété `metadata.name` du binding devra également s'appeller newproduct.
+As the HTTP endpoint is named newproduct, the `metadata.name` property of the binding should also be named newproduct.
 
 {% endcollapsible %}
 
-> **Question** : Quel binding utiliser pour le deuxième besoin ?
+> **Question**: Which binding should be used for the second requirement?
 
-Solution :
+**Solution**:
 {%collapsible %}
-Etant donné que nous voulons **faire parvenir un événement à système externe**, nous devons utiliser un _output binding_.
+Since we want to **send an event to an external system**, we need to use an _output binding_.
 
-Comme le système utilisé par le service externe est une simple requête HTTP, nous pouvons utiliser le [binding HTTP](https://docs.dapr.io/reference/components-reference/supported-bindings/http/)
+As the system used by the external service is a simple HTTP request, we can use the [HTTP binding](https://docs.dapr.io/reference/components-reference/supported-bindings/http/).
 
 {% endcollapsible %}
 
-> **En pratique** : Mettez en place les deux bindings et vérifiez leur fonctionnement. Pour vérifier que le service de mailing fonctionne, vous pouvez remplir la variable d'environnement **MAIL_TO** du service **receipt-generator** avec un email valide. L'expediteur du mail sera une adresse gmail avec l'objet "Validated Command"
+> **In Practice**: Implement both bindings and verify their functionality. To check if the mailing service works, you can fill in the **MAIL_TO** environment variable of the **receipt-generator** service with a valid email. The sender of the email will be a Gmail address with the subject "Validated Command."
 
-**Important**: Le nom du binding devra être `mail`, car c'est celui qui est appelé dans le code de **receipt-generator**
+**Important**: The name of the binding should be `mail` because that is the one called in the code of **receipt-generator**.
 
-Une trace indiquant le succès devrait avoir cette forme :
+A successful trace should look like this:
 
 ![Expected result](/media/lab2/bindings/expected-result.png)
 
-Solution :
+**Solution**:
 {%collapsible %}
 
-##### Output binding : mail
+##### Output Binding: mail
 
-L'output binding à utiliser pour le mail est donc un simple binding http. Il suffit donc de créer un nouveau fichier yaml dans le dossier `src/Lab2/3-bindings/components`.
+The output binding to use for the email is a simple HTTP binding. Create a new YAML file in the `src/Lab2/3-bindings/components` folder.
 
-```yml
+```yaml
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  # Important : Comme indiqué plus haut, le nom du binding doit être "mail"
+  # Important: As mentioned above, the binding name should be "mail"
   name: mail
 spec:
   type: bindings.http
   version: v1
   metadata:
-    # On utilise l'URL d'invocation du service externe (attention à la clef)
+    # Use the invocation URL of the external service (be cautious with the API key)
     - name: url
-      value: https://prod-116.westeurope.logic.azure.com/workflows/0ceb8e48b2254276923acaf348229260/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=<clef-api>
+      value: https://prod-116.westeurope.logic.azure.com/workflows/0ceb8e48b2254276923acaf348229260/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=<api-key>
 ```
 
-##### Input binding : CRON
+##### Input Binding: CRON
 
-L'input binding à utiliser est un CRON.
-On crée donc encore une fois un nouveau fichier yaml dans le dossier `src/Lab2/3-bindings/components`.
+The input binding to use is a CRON. Create a new YAML file in the `src/Lab2/3-bindings/components` folder.
 
-```yml
+```yaml
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  # Important : Comme indiqué ci-dessus, le nom du binding correspondra au
-  # nom de la méthode appelée sur les services
+  # Important: As mentioned above, the binding name will correspond to
+  # the method called on the services
   name: newproduct
 spec:
   type: bindings.cron
   version: v1
   metadata:
-    # La valeur du CRON n'a pas d'importance
+    # The value of the CRON schedule is not crucial for this example
     - name: schedule
       value: "@every 15s"
 ```
 
 {% endcollapsible %}
 
-### Par curiosité: Le "système externe"
+### Out of Curiosity: The "External System"
 
-Le système "externe" présenté est en fait la [LogicApp](https://docs.microsoft.com/fr-fr/azure/logic-apps/logic-apps-overview) suivante:
+The presented "external" system is actually the following [LogicApp](https://docs.microsoft.com/fr-fr/azure/logic-apps/logic-apps-overview):
 
 ![Mailing](/media/lab2/bindings/logic-app-mailing.png)

@@ -1,178 +1,175 @@
 ---
 sectionid: lab2-service-invocation
 sectionclass: h2
-title: Invocation de Service
+title: Invoke services
 parent-id: lab-2
 ---
 
-### Généralités
+### Overview
 
-> **Question généraliste**: Qu'est-ce que le _Service Meshing_ ? Quels sont les exemples de logiciels proposants cette fonctionnalité ?
+> **General Question**: What is Service Meshing? Can you provide examples of software that offer this functionality?
 
-Solution :
+Solution:
 {% collapsible %}
-La meilleure manière de définir le _Service Meshing_ est de présenter le problème qu'il adresse.
+The best way to define Service Meshing is to present the problem it addresses.
 
-Prenons l'exemple de deux services, A et B. A veut appeler B via HTTP.
+Let's take the example of two services, A and B. A wants to call B via HTTP.
 
-Pour pouvoir contacter B, A va avoir besoin d'une information sur sa localisation. Cette information peut prendre la forme d'une URL, d'une adresse ip, ou même d'un couple (nom, namespace) pour Kubernetes par exemple.
+To contact B, A will need information about its location. This information can take the form of a URL, an IP address, or even a pair (name, namespace) for Kubernetes, for example.
 
-Dans tous les cas, en fournissant cette information à A, nous couplons A et B. En effet, si B change de localisation, A devra aussi être mis à jour pour être fonctionnel.
+In any case, by providing this information to A, we couple A and B. Indeed, if B changes its location, A must also be updated to be functional.
 
-C'est un problème important dans le monde des systèmes distribués, les services pouvant changer de localisation assez souvent que ce soit en terme de _noeud_, _namespace_, _url_...
+This is a significant problem in the world of distributed systems, as services can change location quite often, whether in terms of nodes, namespaces, URLs, etc.
 
-Pour adresser ce problème, des services comme [_Istio_](https://istio.io/) ou [_Open Service Mesh_](https://openservicemesh.io/) sont apparus. Le principe de ces deux logiciels est de garder un catalogue de service associant le nom à une localisation, ajoutant donc une couche d'abstraction supplémentaire. Dans cette configuration, il est possible d'appeler les services par leur nom sans révéler leur localisation, _Istio_ ou _Open Service Mesh_ étant les seuls à la connaître et s'occupant de router l'appel.
+To address this issue, services like [_Istio_](https://istio.io/) or [_Open Service Mesh_](https://openservicemesh.io/) have emerged. The principle of these two software solutions is to maintain a service catalog associating the name with a location, adding an additional layer of abstraction. In this configuration, it is possible to call services by their name without revealing their location; _Istio_ or _Open Service Mesh_ are the only ones aware of it and handle the routing.
 
-Appliqué à notre exemple, un scénario **grandement simplifié** pourrait être le suivant :
+Applied to our example, a **greatly simplified** scenario could be as follows:
 
-L'instance d'_Istio_ pourrait contenir:
+The _Istio_ instance could contain:
 
-| Nom | Localisation            |
+| Name | Location                 |
 | --- | ----------------------- |
 | A   | http://A.localapi.net   |
 | B   | https://B.vendorapi.net |
 
-A pourrait alors appeler B en utilisant uniquement son nom, avec une adresse de la forme `http://B.local`.
-_Istio_ s'occuperait alors de router cet appel vers la véritable adresse de B, `https://B.vendorapi.net`.
+A could then call B using only its name, with an address like `http://B.local`. _Istio_ would then route this call to the actual address of B, `https://B.vendorapi.net`.
 
-Cette addresse `http://B.local` restera valide même si l'adresse réelle de B change, et seulement l'instance _Istio_ devra être mise à jour.
+This `http://B.local` address will remain valid even if the actual address of B changes, and only the _Istio_ instance needs to be updated.
 {% endcollapsible %}
 
-> **Question généraliste**: Qu'est-ce que le _gRPC_ ? Quels sont ses avantages et inconvénients ?
+> **General Question**: What is gRPC? What are its advantages and disadvantages?
 
-Solution :
+Solution:
 {% collapsible %}
-Le _gRPC_ (Goog) est un framework crée par Google encapsulant des appels de procédures distantes - _Remote Procedure Calls_ (RPC).
+gRPC (Google Remote Procedure Call) is a framework created by Google that encapsulates remote procedure calls (RPC).
 
-Au contraire d'une API REST, qui se focalise sur la récupération de resources à l'aide d'une syntaxe unifiée, le _RPC_ est orienté vers des **actions**.
-La manière la plus simple de s'imaginer le _RPC_ est d'imaginer appeler des function sur un ordinateur distant.
+Unlike a REST API, which focuses on retrieving resources using a unified syntax, RPC is oriented towards **actions**. The simplest way to imagine RPC is to think of calling functions on a remote computer.
 
-Une particularité du _gRPC_ par rapport aux autres framework de _RPC_ est qu'il utilise HTTP/2 et le langage de description [_Protobuf_](https://fr.wikipedia.org/wiki/Protocol_Buffers) pour décrire le contenu des messages.
+A unique feature of gRPC compared to other RPC frameworks is that it uses HTTP/2 and the [_Protobuf_](https://en.wikipedia.org/wiki/Protocol_Buffers) description language to define message contents.
 
-C'est de cette particuliarité que proviennent les avantages du _gRPC_, la vitesse accrue et la taille diminuée des contenus envoyés.
+The advantages of gRPC stem from this particularity, including increased speed and reduced size of sent content.
 
-Les inconvénients principaux sont :
+The main disadvantages are:
 
-- le _gRPC_ est bien plus difficile à interpréter pour un humain que le REST, en faisant une solution plutôt préférée pour la communication service de backend à service backend
-- le temps de développement _gRPC_ est plus long
-  {% endcollapsible %}
+- gRPC is much more challenging for a human to interpret than REST, making it a solution more preferred for backend-to-backend service communication.
+- gRPC has a longer development time.
+{% endcollapsible %}
 
 ### Dapr
 
-A l'aide de la [documentation](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/service-invocation-overview/), nous allons nous intéresser à ces questions
+Using the [documentation](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/service-invocation-overview/), let's address these questions.
 
-> **Question** : Quel est le principe de l'invocation de service ? Quel est le trajet d'un paquet envoyé par le service A invoquant le service B ? Quel sont les protocoles utilisés lors des différentes étapes d'un trajet de paquet d'un service A a un service B ?
+> **Question**: What is the principle of service invocation? What is the path of a packet sent by service A invoking service B? What protocols are used during the different steps of a packet's journey from service A to service B?
 
-Solution :
+Solution:
 {% collapsible %}
-Le principe de l'invocation de service est de pouvoir invoquer une méthode d'un service distant de manière sécurisée et résiliente. Invoquer un service permet également à Dapr de générer automatiquement les logs et les traces.
+The principle of service invocation is to invoke a method of a remote service securely and resiliently. Invoking a service also allows Dapr to automatically generate logs and traces.
 
-Un paquet allant du service A au service B aurait donc le trajet:
+A packet going from service A to service B would have the following path:
 
 ```sh
-A ---HTTP/gRPC---> sidecar de A
+A ---HTTP/gRPC---> A's sidecar
 #  URL localhost:3500/invoke/B/method/order
 
-sidecar de A ---HTTP/gRPC---> DNS server
-#  B A ? (demande l'adresse ipv4 de B)
+A's sidecar ---HTTP/gRPC---> DNS server
+#  B A ? (requests the ipv4 address of B)
 
-DNS server ---HTTP/gRPC---> sidecar de A
+DNS server ---HTTP/gRPC---> A's sidecar
 #  B A XXX.XXX.XX.XX
 
-sidecar de A ---gRPC---> sidecar de B ---HTTP/gRPC---> B
-#  Transmission de l'appel vers la méthode '/order' de B
+A's sidecar ---gRPC---> B's sidecar ---HTTP/gRPC---> B
+#  Transmitting the call to the '/order' method of B
 
 ```
 
 {% endcollapsible %}
 
-> **Question** : Dans [l'exemple de la page de la documentation](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/service-invocation-overview#example), l'URL permettant à **pythonapp** d'appeler **nodeapp** est _http://localhost:3500/v1.0/invoke/nodeapp/method/neworder_. Décomposez cette URL et expliquez ses composantes.
+> **Question**: In [the example on the documentation page](https://docs.dapr.io/developing-applications/building-blocks/service-invocation/service-invocation-overview#example), the URL allowing **pythonapp** to call **nodeapp** is _http://localhost:3500/v1.0/invoke/nodeapp/method/neworder_. Decompose this URL and explain its components.
 
 Solution:
 
 {%collapsible %}
-En prenant chacune de ses composantes :
+Breaking down each component:
 
-- **http://localhost:3500** : Appel vers le sidecar (non chiffré, inutile car même sandbox applicative)
-- **v1.0** : Version de l'API Dapr
-- **invoke** : Utilisation de l'API d'invocation de service
-- **nodeapp** : Nom du service à appeller
-- **method** : Appel d'une méthode sur le service
-- **neworder** : Nom de la méthode à appeler sur le service
+- **http://localhost:3500**: Call to the sidecar (unencrypted, unnecessary because of the same application sandbox)
+- **v1.0**: Version of the Dapr API
+- **invoke**: Use of the service invocation API
+- **nodeapp**: Name of the service to call
+- **method**: Calling a method on the service
+- **neworder**: Name of the method to call on the service
   {% endcollapsible %}
 
-> **Question**: Quelle est la différence entre un _Service Meshing_ et l'invocation de service de Dapr ?
+> **Question**: What is the difference between Service Meshing and Dapr's service invocation?
 
 Solution:
 
 {%collapsible %}
-<u>Sur la cible</u>:
-Le Service Meshing se déploie sur une infrastructure, et est unique à cette infrastructure. C'est une fonctionnalité OPS.
-L'invocation de service de Dapr est indépendante de l'infrastructure, elle concerne le DEV.
+<u>On the Target</u>:
+Service Meshing is deployed on infrastructure and is unique to that infrastructure. It is an OPS functionality.
+Dapr's service invocation is independent of the infrastructure; it concerns DEV.
 
-<u>Sur les fonctionnalités</u>:
-Si un Service Meshing et l'invocation de Service de Dapr permettent tous les deux de faciliter les appels de service à service, le service meshing va travailler au niveau du réseau, tandis que Dapr va travailler au niveau de l'application. Il en suit :
+<u>On the Features</u>:
+While both Service Meshing and Dapr's service invocation facilitate service-to-service calls, service meshing operates at the network level, whereas Dapr works at the application level. As a result:
 
-- Dapr **ajoute** une découverte des méthodes de l'application en plus de résoudre le nom du service
-- Dapr **ne permettra pas** de redirections réseau à travers Internet (ou un tunnel) dans un cas d'application multi-clouds par exemple.
+- Dapr **adds** method discovery of the application in addition to resolving the service name.
+- Dapr **does not enable** network redirections over the Internet (or a tunnel) in a multi-cloud application scenario, for example.
 
-Il est donc possible d'utiliser un service comme _Istio_ en conjonction avec Dapr, les services n'ayant pas la même couverture fonctionnelle.
+It is possible to use a service like _Istio_ in conjunction with Dapr, as the services do not have the same functional coverage.
 
-Voir https://docs.dapr.io/concepts/service-mesh/
+See https://docs.dapr.io/concepts/service-mesh/
 {% endcollapsible %}
 
-> **Ouverture** : Dans la page, il est fait mention de _Dapr Sentry_. Quel est son rôle ? Observez le fichier `docker-compose.yml` de l'exercice précédent, Sentry est-il présent ? Qu'en déduisez vous ?
+> **Exploration**: In the page, _Dapr Sentry_ is mentioned. What is its role? Examine the `docker-compose.yml` file from the previous exercise. Is Sentry present? What do you deduce from this?
 
 Solution:
 
 {%collapsible %}
-Sentry permet le **chiffrage** et **l'authentification mutuelle** des communications entre services. Il permet la communication mTLS entre les services, agissant alors en tant que stockage / broker de certificats.
+Sentry enables **encryption** and **mutual authentication** of communications between services. It allows mTLS communication between services, acting as a storage/broker of certificates.
 
-Sentry est un service totalement optionnel. S'il n'est pas présent au démarrage des *sidecars* (et son adresse spécifiée dans la commande de démarrage), les communications ne seront simplement pas chiffrées.
+Sentry is a completely optional service. If it is not present at the start of the sidecars (and its address specified in the startup command), communications will simply not be encrypted.
 
-Dapr possède donc une architecture modulaire, et il existe d'autres services optionnels :
+Dapr, therefore, has a modular architecture, and there are other optional services:
 
-- **[Placement](https://docs.dapr.io/concepts/dapr-services/placement/)**, permettant l'utilisation du [modèle Acteurs](https://fr.wikipedia.org/wiki/Mod%C3%A8le_d%27acteur)
-- Le **[Name Resolution Component](https://docs.dapr.io/reference/components-reference/supported-name-resolution/)** interne à Dapr est aussi modulaire. Par défaut, une résolution plate ([mDNS](https://en.wikipedia.org/wiki/Multicast_DNS)) est utilisée, mais **coreDNS**(Kubernetes) ou bien **Consul** peuvent également être utilisés selon les plateformes.
-  {% endcollapsible %}
+- **[Placement](https://docs.dapr.io/concepts/dapr-services/placement/)**, enabling the use of the [Actor model](https://en.wikipedia.org/wiki/Actor_model)
+- The internal Dapr **[Name Resolution Component](https://docs.dapr.io/reference/components-reference/supported-name-resolution/)** is also modular. By default, flat resolution ([mDNS](https://en.wikipedia.org/wiki/Multicast_DNS)) is used, but **coreDNS
 
-### En application
+## In Practice:
 
-> **Note** : La nouvelle version de l'application se trouve désormais dans `src/Lab2/2-service-invocation`
+> **Note**: The new version of the application is now located in `src/Lab2/2-service-invocation`.
 
-Il est l'heure de reprendre le fil rouge. Cherchant toujours à rendre notre application de pré-commandes complète, deux nouveaux services ont été ajoutés:
+It's time to pick up the main thread again. Always aiming to make our pre-order application complete, two new services have been added:
 
-- **stock-manager** (en Go): Une fois une commande validée,  **order-processing** appelle la méthode _/stock_ de **stock-manager** pour qu'il rajoute la commande aux stocks requis.
-- **receipt-generator** (en Rust): Une fois une commande validée, **order-processing** appelle la méthode _/_ de **receipt-generator** afin qu'il génère une confirmation
+- **stock-manager** (in Go): Once an order is validated, **order-processing** calls the _/stock_ method of **stock-manager** to add the order to the required stocks.
+- **receipt-generator** (in Rust): Once an order is validated, **order-processing** calls the _/_ method of **receipt-generator** to generate a confirmation.
 
-Le nom de chaque service est également son app-id.
+The name of each service is also its app-id.
 
-La nouvelle cible est donc:
+The new target is as follows:
 
 ![Expected result](/media/lab2/service-invocation/step-2-service-invocation.png)
 
-> **Question**: Quelle est l'URL que doit utiliser **order-processing** pour appeler **stock-manager** ? Expliquez.
+> **Question**: What is the URL that **order-processing** should use to call **stock-manager**? Explain.
 
-**Indice** : L'API d'invocation de Dapr est disponible [ici](https://docs.dapr.io/reference/api/service_invocation_api/)
+**Hint**: The Dapr service invocation API is available [here](https://docs.dapr.io/reference/api/service_invocation_api/).
 
-Solution :
+Solution:
 {% collapsible %}
-D'après la documentation, l'URL d'une invocation de service est de la forme :
+According to the documentation, the URL for a service invocation is of the form:
 
 ```sh
 PATCH/POST/GET/PUT/DELETE http://localhost:3500/v1.0/invoke/<appId>/method/<method-name>
 ```
 
-où :
+where:
 
-- **localhost:3500** est l'adresse du sidecar
-- **invoke** est le préfixe de l'API d'invocation
-- **\<appId\>** est l'id du service à appeler tel que déclaré par le l'option `--app-id` de la ligne de commande de Dapr
-- **\<method-name\>** est le nom de la méthode à appeler sur le service distant
+- **localhost:3500** is the address of the sidecar
+- **invoke** is the prefix of the invocation API
+- **\<appId\>** is the service id to call, as declared by the `--app-id` option of the Dapr command line
+- **\<method-name\>** is the name of the method to call on the remote service
 
-Dans ce cas précis, le service à appeler est **stock-manager**, plus particulièrement la méthode _/stock_
+In this specific case, the service to call is **stock-manager**, specifically the _/stock_ method.
 
-L'URL recherchée est donc :
+The desired URL is, therefore:
 
 ```sh
 http://localhost:3500/v1.0/invoke/stock-manager/method/stock
@@ -180,26 +177,26 @@ http://localhost:3500/v1.0/invoke/stock-manager/method/stock
 
 {% endcollapsible %}
 
-> **Question**: Quelle est l'URL que doit utiliser **order-processing** pour appeler **receipt-generator** ? Expliquez.
+> **Question**: What is the URL that **order-processing** should use to call **receipt-generator**? Explain.
 
-Solution :
+Solution:
 {% collapsible %}
-D'après la documentation, l'URL d'une invocation de service est de la forme :
+According to the documentation, the URL for a service invocation is of the form:
 
 ```sh
 PATCH/POST/GET/PUT/DELETE http://localhost:3500/v1.0/invoke/<appId>/method/<method-name>
 ```
 
-où :
+where:
 
-- **localhost:3500** est l'adresse du sidecar
-- **invoke** est le préfixe de l'API d'invocation
-- **\<appId\>** est l'id du service à appeler tel que déclaré par le l'option `--app-id` de la ligne de commande de Dapr
-- **\<method-name\>** est le nom de la méthode à appeler sur le service distant
+- **localhost:3500** is the address of the sidecar
+- **invoke** is the prefix of the invocation API
+- **\<appId\>** is the service id to call, as declared by the `--app-id` option of the Dapr command line
+- **\<method-name\>** is the name of the method to call on the remote service
 
-Dans ce cas précis, le service à appeler est **receipt-generator**, plus particulièrement la méthode _/_
+In this specific case, the service to call is **receipt-generator**, specifically the _/_ method.
 
-L'URL recherchée est donc:
+The desired URL is, therefore:
 
 ```sh
 http://localhost:3500/v1.0/invoke/receipt-generator/method/
@@ -207,15 +204,16 @@ http://localhost:3500/v1.0/invoke/receipt-generator/method/
 
 {% endcollapsible %}
 
-> **En pratique**: A l'aide des deux questions précédentes, renseignez les variables d'environnements **RECEIPT_GENERATOR_INVOKE_URL** et **STOCK_MANAGER_INVOKE_URL** dans `docker-compose.yml`. Exécutez le fichier docker-compose et lancer une pré-commande via l'interface web (localhost:8089).
+> **In Practice**: Using the answers to the two previous questions, fill in the environment variables **RECEIPT_GENERATOR_INVOKE_URL** and **STOCK_MANAGER_INVOKE_URL** in `docker-compose.yml`. Execute the docker-compose file and place a pre-order via the web interface (localhost:8089).
 
-**Rappel**: Pour lancer un fichier docker-compose, lancez la commande suivante 
+**Reminder**: To run a docker-compose file, use the following command:
 
 ```sh
 docker compose rm -fsv ; docker compose up --no-attach redis
 ```
 
-La trace de succès devrait avoir cette forme :
+The success trace should look like this:
+
 ![Expected result](/media/lab2/service-invocation/expected-result.png)
 
 {% collapsible %}
@@ -236,7 +234,7 @@ Solution:
 
 {% endcollapsible %}
 
-**Note** : Il est également possible de limiter quel(s) services(s) peuvent appeler un service. Pour cela un object configuration existe qui peut être passé en argument de chaque sidecar avec le switch de CLI **--config**. Voici un exemple où seul **order-processing** aurait le droit d'appeler le microservice.
+**Note**: It is also possible to limit which service(s) can call a service. For this, a configuration object exists that can be passed as an argument to each sidecar using the CLI switch **--config**. Here is an example where only **order-processing** would have the right to call the microservice.
 
 ```yml
 apiVersion: dapr.io/v1alpha1
@@ -251,10 +249,10 @@ spec:
         defaultAction: allow
 ```
 
-Pour appliquer cette configuration à **receipt-generator** par exemple il faudrait:
+To apply this configuration to **receipt-generator**, for example, you would need to:
 
-- Créer un dossier config et y enregistrer la configuration ci-dessus (avec pour exemple le nom `config.yml`)
-- Modifier le docker-compose comme suit:
+- Create a config folder and save the above configuration in it (with the name, for example, `config.yml`).
+- Modify the docker-compose file as follows:
 
 ```diff
   ############################

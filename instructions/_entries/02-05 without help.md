@@ -5,63 +5,64 @@ title: Le mode processus (Facultatif)
 parent-id: lab-1
 ---
 
-Dans les exercices précédents, nous avons surtout travaillé avec des conteneurs, un fichier `docker-compose.yml` étant même fourni.
+```markdown
+In the previous exercises, we mostly worked with containers, and even a `docker-compose.yml` file was provided.
 
-Il est cependant possible d'utiliser Dapr en mode processus, ce qui permet un processus de développement/débuggage plus simple
+However, it is possible to use Dapr in process mode, which allows for a simpler development/debugging process.
 
-> **En pratique** : Installez Dapr localement sur votre PC et initialisez votre environnement local.
+> **Practical Exercise**: Install [Dapr locally on your PC](https://docs.dapr.io/getting-started/install-dapr-cli/) and initialize your local environment.
 
-**Indication** : [Documentation](https://docs.dapr.io/getting-started/). <u>Ne pas intialiser Dapr pour un environnement Kubernetes !</u>
+**Hint**: [Documentation](https://docs.dapr.io/getting-started/). <u>Do not initialize Dapr for a Kubernetes environment!</u>
 
-> **Question** : Quels sont les conteneurs déployés par l'initialisation de Dapr ? Quel est le rôle de chacun ?
+> **Question**: What containers are deployed by the initialization of Dapr? What is the role of each?
 
 Solution:
 {% collapsible %}
-Les conteneurs déployés sont :
+The deployed containers are:
 
-- Redis : En initialisant Dapr, une instance de Redis ainsi que le composant associé sont créés (dans le répertoire `~/.dapr/components`). Redis pouvant à la fois assurer les fonctionnalités de persistence d'état et de distribution de message, il est souvent choisi comme composant par défaut **dans les environnements de développement**.
-- Zipkin : [Logiciel Open-Source](https://github.com/openzipkin/zipkin) permettant de tracer les appels entre les services (Voir _Lab2_)
-- Placement : Un service de Dapr permettant d'utiliser le [modèle de programmation distribuée "Acteurs"](https://docs.dapr.io/developing-applications/building-blocks/actors/actors-overview/). Vous pourrez retrouver une explication détaillée du principe de ce modèle [sur le GitHub du projet Orléans](https://github.com/dotnet/orleans)
+- Redis: By initializing Dapr, an instance of Redis and the associated component are created (in the `~/.dapr/components` directory). Redis can both handle state persistence and message distribution, making it often chosen as the default component **in development environments**.
+- Zipkin: An [Open-Source software](https://github.com/openzipkin/zipkin) for tracing calls between services (See _Lab2_)
+- Placement: A Dapr service allowing the use of the [distributed programming model "Actors"](https://docs.dapr.io/developing-applications/building-blocks/actors/actors-overview/). A detailed explanation of the principles of this model can be found on the [GitHub of the **Orleans** project](https://github.com/dotnet/orleans).
   {% endcollapsible %}
 
-### Déployer une application en mode processus
+### Deploying an Application in Process Mode
 
-Nous allons maintenant déployer l'application se trouvant dans le dossier `src/Lab2/1-without-help` en mode processus.
+Now, we will deploy the application located in the `src/Lab2/1-without-help` folder in process mode.
 
-Puisque le type de déploiement que nous visons n'est pas conteneurisé, il va tout d'abord falloir installer les piles logicielles (_stacks_) de chaque service:
+Since the deployment type we are aiming for is not containerized, we first need to install the software stacks (_stacks_) for each service:
 
-- Application Nodejs:
-  - installer `nodejs` (>= 8.0)
-  - installer les dépendances de l'application avec `npm install` (dans le dossier `src/Lab2/1-without-help/node`)
-  - transpiler le Typescript en Javascript avec la commande `npm run build` (dans le dossier `src/Lab2/1-without-help/node`)
-  - La commande pour lancer l'application est `node dist/app.js`.
-- Service Python:
-  - installer `python` (>= 3.0)
-  - (l'application n'a pas de dépendances)
-  - La commande pour lancer l'application est `python3 app.py`
+- Nodejs Application:
+  - Install `nodejs` (>= 8.0)
+  - Install application dependencies with `npm install` (in the `src/Lab2/1-without-help/node` directory)
+  - Transpile TypeScript into JavaScript with the command `npm run build` (in the `src/Lab2/1-without-help/node` directory)
+  - The command to run the application is `node dist/app.js`.
+- Python Service:
+  - Install `python` (>= 3.0)
+  - (The application has no dependencies)
+  - The command to run the application is `python3 app.py`
 
-> **En pratique**: en mode processus en utilisant la commande `dapr run` de Dapr.
+> **Practical Exercise**: Run it in process mode using Dapr's `dapr run` command.
 
-**Indication** : Vous pouvez vous inspirer de cette [documentation de démarrage rapide](https://docs.dapr.io/getting-started/quickstarts/pubsub-quickstart/).
+**Hint**: You can refer to this [quick start documentation](https://docs.dapr.io/getting-started/quickstarts/pubsub-quickstart/).
 
 Solution:
 {% collapsible %}
-Après avoir effectué les étapes ci-dessus, il suffit de lancer les commandes
+After completing the above steps, simply run the following commands:
 
 ```shell
 # cwd: src/Lab2/1-without-help/node
 dapr run --app-id nodeapp --components-path ../components --app-port 3000 -- node dist/app.js
-# cwd: src/Lab2/1-without-help/python (autre shell)
-# Note : Sous linux, l'executable de python est encore parfois appelé python3
+# cwd: src/Lab2/1-without-help/python (in another shell)
+# Note: On Linux, the python executable is sometimes still called python3
 dapr run --app-id pythonapp --components-path ../components -- python app.py
 ```
 
 {% endcollapsible %}
 
-### Récapitulatif
+### Summary
 
-Dapr permet à la fois d'assister des applications conteneurisées (pattern du sidecar) mais aussi des applications en mode processus.
+Dapr allows both assisting containerized applications (sidecar pattern) and process mode applications.
 
-Si la partie sidecar est indiquée dans des cas d'orchestration de conteneurs (Kubernetes, docker-compose, docker swarm...), la partie processus va nous permettre d'exécuter des applications localement sans avoir à penser à les conteneuriser.
+While the sidecar part is indicated in cases of container orchestration (Kubernetes, docker-compose, docker swarm, etc.), the process part allows us to run applications locally without having to think about containerizing them.
 
-Ces deux modes de fonctionnement assurent une compatibilité avec des services Cloud comme du Kubernetes Managé (AKS) ou simplement de l'hébergement d'application en mode process (App Service)
+These two operating modes ensure compatibility with cloud services such as managed Kubernetes (AKS) or simply hosting applications in process mode (App Service).

@@ -1,84 +1,84 @@
 ---
 sectionid: lab2-secrets
 sectionclass: h2
-title: La gestion des secrets
+title: Secret management
 parent-id: lab-2
 ---
+Translate to English while maintaining the format:
 
-Dans tous les scénarios que nous avons vu jusque là, nous avons par simplicité utilisé des services sans aucune forme d'authentification.
-Dans un scénario de production, il sera néanmoins essentiel de s'adonner à une bonne gestion des secrets.
+In all the scenarios we have seen so far, for simplicity, we have used services without any form of authentication. In a production scenario, however, it will be essential to engage in proper secret management.
 
-### Généralités
+### Generalities
 
-> **Question généraliste** : Qu'est-ce qu'un coffre fort numérique (ou gestionnaire de secrets) ? Quel est l'avatange de stocker des secrets dans ce coffre en lieu et place de les renseigner directement dans l'environnement des services ?
+> **General question**: What is a digital safe (or secret manager)? What is the advantage of storing secrets in this safe instead of directly providing them in the services' environment?
 
-Solution :
+Solution:
 
 {% collapsible %}
 
-Un gestionnaire de secrets est un service centralisant la creation/récupération/suppression des secrets d'une application distribuée.
+A secret manager is a service that centralizes the creation/retrieval/deletion of secrets for a distributed application.
 
-Bien qu'ajoutant une indirection supplémentaire, cette solution présente des avantages indispensables comme :
+Although adding an additional indirection, this solution has essential advantages such as:
 
-- Empêcher la duplication d'un secret utilisé plusieurs fois
-- Permettre une forme d'authentification/autorisation, contrôlant quels services accèdent à quels secrets
-- Garder une trace des accès, facilitant les audits de sécurité
+- Preventing the duplication of a secret used multiple times
+- Allowing a form of authentication/authorization, controlling which services access which secrets
+- Keeping a record of accesses, facilitating security audits
 
 {% endcollapsible %}
 
 ### Dapr
 
-A l'aide de la [documentation](https://docs.dapr.io/developing-applications/building-blocks/secrets/secrets-overview/), répondez aux questions suivantes :
+Using the [documentation](https://docs.dapr.io/developing-applications/building-blocks/secrets/secrets-overview/), answer the following questions:
 
-> **Question** : Quels sont les différents coffres forts supportés par Dapr ? Quels sont ceux utilisables en production ?
+> **Question**: What are the different safes supported by Dapr? Which ones are usable in production?
 
-Solution :
+Solution:
 
 {% collapsible %}
 
-D'après [la documentation](https://docs.dapr.io/reference/components-reference/supported-secret-stores/)(Février 2023), les différents coffres forts disponibles sont :
+According to [the documentation](https://docs.dapr.io/reference/components-reference/supported-secret-stores/) (February 2023), the different supported safes are:
 
-| Nom                                   | Composant | Localisation              | Production ?                                                           |
-| ------------------------------------- | --------- | ------------------------- | ---------------------------------------------------------------------- |
-| Hashicorp Vault                       | Stable    | Externe / Dans le cluster | Oui                                                                    |
-| Secrets Kubernetes                    | Stable    | Dans le cluster           | A éviter. Secrets en base64, limités à un namespace                    |
-| Variables d'environnement             | Stable    | Dans le noeud             | Non.                                                                   |
-| Fichier                               | Stable    | Dans le conteneur         | Non.                                                                   |
-| Alibaba Parameter Store               | Alpha     | Externe                   | Oui. Attention à la maturité du composant                              |
-| AWS Secrets Manager / Parameter Store | Alpha     | Externe                   | Oui. Attention à la maturité du composant                              |
-| GCP Parameter Store                   | Alpha     | Externe                   | Oui. Attention à la maturité du composant                              |
-| Azure Key Vault                       | Stable    | Externe                   | Oui                                                                    |
+| Name                                   | Component | Location                 | Production?                                                          |
+| -------------------------------------- | --------- | ------------------------ | --------------------------------------------------------------------- |
+| Hashicorp Vault                        | Stable    | External/In-cluster       | Yes                                                                   |
+| Secrets Kubernetes                     | Stable    | In-cluster               | Avoid. Secrets in base64, limited to a namespace                      |
+| Environment Variables                  | Stable    | In the node              | No                                                                    |
+| File                                   | Stable    | In the container         | No                                                                    |
+| Alibaba Parameter Store                | Alpha     | External                 | Yes. Pay attention to the component's maturity                         |
+| AWS Secrets Manager / Parameter Store  | Alpha     | External                 | Yes. Pay attention to the component's maturity                         |
+| GCP Parameter Store                    | Alpha     | External                 | Yes. Pay attention to the component's maturity                         |
+| Azure Key Vault                        | Stable    | External                 | Yes                                                                   |
 
-De manière générale, il sera toujours préférable de stocker les secrets en dehors de la plateforme d'exécution des services, pour ne pas "placer tous ses oeufs dans le même panier". Dans le cas où le gestionnaire de secret est hébergé sur la même plateforme que les services, il faudra prêter attention à la fiabilité de cette partie ultra critique (mode cluster, persistence, sauvegardes...).
+In general, it will always be preferable to store secrets outside the service execution platform to avoid "putting all your eggs in one basket." In case the secret manager is hosted on the same platform as the services, attention should be paid to the reliability of this extremely critical part (cluster mode, persistence, backups, etc.).
 
 {% endcollapsible %}
 
-> **Question** : Quels sont les deux moyens pour accéder au gestionnaire de secrets à travers Dapr ?
+> **Question**: What are the two ways to access the secret manager through Dapr?
 
-Solution :
+Solution:
 
 {% collapsible %}
-La page de documentation présente deux moyens d'accéder au gestionnaire de secrets à travers Dapr:
+The documentation page presents two ways to access the secret manager through Dapr:
 
-- Utiliser l'API REST / les SDKs de Dapr depuis les **services** eux-mêmes
-- Utiliser des références aux secrets depuis les **composants** déclarés
+- Use the Dapr API REST / SDKs from the **services** themselves
+- Use references to secrets from declared **components**
 
-#### Depuis les services
+#### From Services
 
-Depuis le code des services, il suffit d'utiliser l'API correspondante :
+From the service code, you just need to use the corresponding API:
 
 ```curl
-GET/POST http://localhost:3500/v1.0/secrets/<NOM_COMPOSANT>/<NOM_SECRET>
+GET/POST http://localhost:3500/v1.0/secrets/<COMPONENT_NAME>/<SECRET_NAME>
 ```
 
-où:
+where:
 
-- **\<NOM_COMPOSANT\>** : Nom du composant de gestion de secrets
-- **\<NOM_SECRET\>** : Clef / Namespace (en fonction du stockage sous-jacent) du secret stocké
+- **\<COMPONENT_NAME\>**: Name of the secret management component
+- **\<SECRET_NAME\>**: Key/Namespace (depending on the underlying storage) of the stored secret
 
-#### Depuis les composants
+#### From Components
 
-L'autre manière est de modifier les composants Dapr existant pour y intégrer des références au gestionnaire de secret.
+The other way is to modify existing Dapr components to include references to the secret manager.
 
 ```diff
 apiVersion: dapr.io/v1alpha1
@@ -92,9 +92,9 @@ spec:
   - name: redisHost
     value: localhost:6379
   - name: redisPassword
-    # Au lieu d'utiliser une valeur 
+    # Instead of using a value 
 -    value: ""
-    # Une référence est passée
+    # A reference is passed
 +    secretKeyRef:
 +    	name: <NAMESPACE>
 +     key:  <SECRET_KEY>
@@ -105,13 +105,12 @@ spec:
 
 {% endcollapsible %}
 
-> **Question** : Proposez une configuration Dapr du service **service-1** lui permettant seulement d'accéder au secret **secret-1** dans le composant de gestion de secrets **vault**.
-
-Solution :
+> **Question**: Propose a Dapr configuration for the **service-1** allowing it to only access the **secret-1** in the secret management component **vault**.
+Solution:
 
 {% collapsible %}
 
-Il faudrait simplement appliquer cette configuration (voir partie monitoring) au service **secret-1**.
+To achieve this, you would simply apply this configuration (see monitoring section) to the **service-1**.
 
 ```yml
 apiVersion: dapr.io/v1alpha1
@@ -126,68 +125,69 @@ spec:
         allowedSecrets: ["secret-1"]
 ```
 
-Il faut cependant noter les autres services auraient accès à l'ensemble des secrets, ce qui pourrait poser problème.
+However, it's important to note that other services would have access to all secrets, which could pose a problem.
 
-Une autre configuration possible dans ce cas serait d'appliquer une configuration à tous les services qui par défaut refuse l'accès à tous les secrets. De manière analogue au fonctionnement d'un pare-feu, il faudrait ensuite explicitement autoriser chaque service à accéder à chaque secret.
+Another possible configuration in this case would be to apply a configuration to all services that, by default, denies access to all secrets. Similar to a firewall operation, each service would then need to be explicitly allowed to access each secret.
+
 {% endcollapsible %}
 
-### En application
+### In Application
 
-L'application fil rouge continue alors à évoluer. Cette fois-ci, l'instance de Redis servant à la communication entre `command-api` et `order-processing` a été modifiée pour nécessiter un mot de passe : **suchStrongP4ssword!!**
+The red thread application continues to evolve. This time, the Redis instance used for communication between `command-api` and `order-processing` has been modified to require a password: **suchStrongP4ssword!!**
 
-Un nouveau service a également été ajouté dans l'application : un [Vault d'HashiCorp](https://www.vaultproject.io/). Ce coffre fort a été initialisé (en [mode de développement](https://www.vaultproject.io/docs/concepts/dev-server)) comme suit :
+A new service has also been added to the application: a [HashiCorp Vault](https://www.vaultproject.io/). This vault has been initialized (in [development mode](https://www.vaultproject.io/docs/concepts/dev-server)) as follows:
 
-| Namespace | Valeur                          |
+| Namespace | Value                           |
 | --------- | ------------------------------- |
 | redis     | REDIS_PASS=suchStrongP4ssword!! |
 
-Ce coffre fort est accessible dans l'application à l'adresse `http://vault:8200`. Le jeton d'accès (_root token_) est **roottoken**.
+This vault is accessible in the application at `http://vault:8200`. The access token (_root token_) is **roottoken**.
 
-> **En pratique**: A l'aide des informations ci-dessous, déclarez le composant Dapr (dans le dossier `src/Lab2/7-secrets/components`) correspondant au Vault.
+> **In practice**: Using the information below, declare the Dapr component (in the `src/Lab2/7-secrets/components` folder) corresponding to the Vault.
 
-**Indication** : Pensez à désactiver la vérification du TLS
+**Hint**: Remember to disable TLS verification.
 
-Solution :
+Solution:
 
 {% collapsible %}
 
-Le coffre fort utilisé étant un Vault d'HashiCorp, il faut utiliser le [composant Dapr correspondant](https://docs.dapr.io/reference/components-reference/supported-secret-stores/hashicorp-vault/).
+Since the used vault is a HashiCorp Vault, the corresponding [Dapr component](https://docs.dapr.io/reference/components-reference/supported-secret-stores/hashicorp-vault/) should be used.
 
-Ce composant dispose d'un grand nombre de paramètres. Cependant, le déploiement du Vault dans ce cas étant très simple, seulement trois paramètres sont réellement requis.
+This component has many parameters, but since the deployment of the vault in this case is straightforward, only three parameters are truly required.
 
-Le composant à créer est donc :
+The component to create is:
 
 ```yml
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  # Le composant Dapr de nom "vault" ...
+  # The Dapr component named "vault"...
   name: vault
 spec:
-  # est une instance de Vault de Hashicorp ...
+  # is an instance of HashiCorp Vault...
   type: secretstores.hashicorp.vault
   version: v1
   metadata:
-    # disponible à l'adresse http://vault:8200 ...
+    # available at the address http://vault:8200...
     - name: vaultAddr
       value: "http://vault:8200"
-    # qui n'utilise pas de TLS ...
+    # not using TLS...
     - name: skipVerify
       value: "false"
-    # dont le mot de passe est "roottoken"
+    # with the password "roottoken"
     - name: vaultToken
       value: "roottoken"
 ```
 
 {% endcollapsible %}
 
-Le composant étant créé, il est possible de récupérer les secrets des deux manières que nous avons abordées plus haut.
+With the component created, it is possible to retrieve secrets in the two ways we have discussed earlier.
 
-> **En pratique**: Modifiez le composant `pubsub.yml` pour inclure la récupération du mot de passe depuis le composant de gestion de secret. Vérifiez le fonctionnement en exécutant l'application située à `src/Lab2/7-secrets/docker-compose.yml`
+> **In practice**: Modify the `pubsub.yml` component to include retrieving the password from the secret management component. Check the functionality by running the application located at `src/Lab2/7-secrets/docker-compose.yml`
 
-**Indication** : En cas d'échec de récupération du mot de passe de l'instance de Redis, certains services vont simplement crasher.
+**Hint**: In case of failure to retrieve the password from the Redis instance, some services might simply crash.
 
-Solution :
+Solution:
 
 {% collapsible %}
 
@@ -202,25 +202,26 @@ spec:
   metadata:
     - name: redisHost
       value: redis:6379
-    # Le mot de passe est un secret ...
+    # The password is a secret...
     - name: redisPassword
       secretKeyRef:
-        # se trouvant dans le namespace "redis"
+        # located in the "redis" namespace
         name: redis
-        # et est la valeur de correspondant à la clef REDIS_PASS
+        # and is the value corresponding to the REDIS_PASS key
         key: REDIS_PASS
-# Dans le composant de gestion de secrets appelé "vault"
+# In the secret management component called "vault"
 auth:
   secretStore: vault
 ```
+
 {% endcollapsible %}
 
 ### Conclusion
 
-La gestion des secrets est une facette si essentielle de la vie d'une application distribuée qu'elle doit être incluse dès sa conception.
+Secret management is such an essential aspect of the life of a distributed application that it must be included from its conception.
 
-Dans cet exemple, nous utilisons un gestionnaire de secret directement intégré dans l'application, via un Vault. Si cette configuration est amplement suffisante dans le cadre d'un exercice, elle n'est évidemment pas conseillée sous cette forme en production.
+In this example, we use a secret manager directly integrated into the application, via a Vault. While this configuration is sufficient for an exercise, it is not recommended in this form for production.
 
-Dans une configuration de production entièrement privée, il faudrait ainsi prévoir une couche de persistance pour le gestionnaire de secret et une meilleure sécurité d'accès.
+In a fully private production configuration, it would be necessary to provide a persistence layer for the secret manager and better access security.
 
-Dans une configuration utilisant le Cloud public, il sera en revanche plus conseillé de se tourner vers un service managé, comme par exemple [Azure Keyvault](https://azure.microsoft.com/fr-fr/services/key-vault/).
+In a configuration using public cloud services, it would be more advisable to turn to a managed service, such as [Azure Keyvault](https://azure.microsoft.com/en-us/services/key-vault/).

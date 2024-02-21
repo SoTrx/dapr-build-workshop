@@ -1,10 +1,10 @@
 ---
 sectionid: discover
 sectionclass: h2
-title: Avant-propos
+title: Foreword
 parent-id: intro
 ---
 
-[Dapr](https://dapr.io/) (Distributed Application Runtime) est un programme facilitant la communication entre les services d'une application. Utilisant le modèle du [_sidecar_](https://docs.microsoft.com/fr-fr/azure/architecture/patterns/sidecar), ce programme est conçu pour s'éxecuter "à coté" d'un service pour lui apporter des fonctionalités supplémentaires. Les deux processus sont alors indépendants et communiquent à travers leurs interfaces _localhost_.
+[Dapr](https://dapr.io/) (Distributed Application Runtime) is a program that facilitates communication between the services of an application. Using the [_sidecar_](https://docs.microsoft.com/fr-fr/azure/architecture/patterns/sidecar) model, this program is designed to run "alongside" a service to provide additional functionalities. The two processes are then independent and communicate through their _localhost_ interfaces.
 
-Le but de Dapr est de permettre un **découplage applicatif**, c'est à dire de réduire le nombre de dépendances fortes entre les services d'une application.
+The goal of Dapr is to enable **application decoupling**, meaning to reduce the number of strong dependencies between the services of an application.

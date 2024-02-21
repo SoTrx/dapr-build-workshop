@@ -1,44 +1,44 @@
 ---
 sectionid: prereq
 sectionclass: h2
-title: Prérequis
+title: Prerequisites
 parent-id: intro
 ---
 
-### Prérequis
+### Prerequisites
 
-Ce workshop va demander les éléments suivants:
+This workshop requires the following:
 
-- une souscription Azure
-- Azure CLI (**>= 2.30**) **et son extension** pour Containers Apps
-- [Docker](https://www.docker.com/) avec son extension [compose](https://docs.docker.com/compose/install/)(**>=1.27.0**). L'extension est incluse dans Docker-Desktop, il faudra donc seulement l'installer sur Linux.
-- [Les sources du workshop](https://aka.ms/daprartifacts)
+- An Azure subscription
+- Azure CLI (**>= 2.56**) **and its extension** for Containers Apps
+- [Docker](https://www.docker.com/) with its [compose](https://docs.docker.com/compose/install/) extension (**>=1.27.0**). The extension is included in Docker-Desktop, so you only need to install it on Linux.
+- [Workshop source code](https://aka.ms/daprartifacts)
 
-### Installer Azure CLI et l'extension pour Azure Container Apps
+### Install Azure CLI and the extension for Azure Container Apps
 
-#### Si CLI non installée : Installer le CLI
+#### If CLI is not installed: Install the CLI
 
-Suivez [ce lien](https://docs.microsoft.com/fr-fr/cli/azure/install-azure-cli) et suivez l'onglet correspondant à votre système d'exploitation.
+Follow [this link](https://docs.microsoft.com/fr-fr/cli/azure/install-azure-cli) and choose the tab that corresponds to your operating system.
 
-#### Si CLI installée : Upgrade sa version du CLI
+#### If CLI is installed: Upgrade its version
 
 ```bash
 az version
-# Si version az-core <= 2.30
+# If az-core version <= 2.56
 az upgrade
 ```
 
-#### Installer l'extension Azure Container Apps
+#### Install Azure Container Apps extension
 
-Une fois la CLI installé, installez l'extension de la CLI pour Azure Container Apps
+Once the CLI is installed, install the extension for Azure Container Apps CLI
 
 ```bash
 az extension add -n containerapp
 ```
 
-#### Se connecter à sa souscription
+#### Log in to your subscription
 
-Puis enfin connectez vous à votre souscription à l'aide de la commande suivante
+Finally, connect to your subscription using the following command
 
 ```bash
 az login

@@ -5,27 +5,38 @@ title: Le role de Dapr
 parent-id: lab-1
 ---
 
-Le rôle de Dapr est de permettre une sorte de découplage architecturel. Au lieu de devoir lier les composants les uns aux autres – avec l'utilisation de bibliothèques spécifiques par exemple –  nous allons pouvoir ajouter un degré d'abstraction supplémentaire permettant de simplifier le code.
+In looking at the code of the Node and Python services, answer the following questions:
 
-Plus important : ce découplage permet au développeur d'un service de se **décharger de la responsabilité de l'implémentation**.
+> **Question**: How do the three services communicate with each other?
 
-Pour illuster cela, nous allons déployer une autre version de l'application présentée qui elle utilise Dapr. 
+Solution:
+{% collapsible %}
+The three services communicate **directly**:
 
-> **Note** : Cette nouvelle application est située dans le dossier `src/Lab1/1-decoupling-direct`
+- The Python service calls the Node service via an **HTTP request** to its server's URL.
+- The Node service calls Redis using the **[ioredis](https://www.npmjs.com/package/ioredis)** library, which encapsulates the **RESP** protocol, Redis's specific protocol.
+  {% endcollapsible %}
 
-Cette nouvelle version est exécutable en utilisant la commande suivante:
+The role of Dapr is to enable a kind of architectural decoupling. Instead of having to link the components together – using specific libraries, for example – we can add an additional level of abstraction to simplify the code.
+
+More importantly, this decoupling allows the developer of a service to **offload the responsibility of implementation**.
+
+To illustrate this, we will deploy another version of the presented application that uses Dapr.
+
+> **Note**: This new application is located in the `src/Lab1/1-decoupling/withDapr` folder.
+
+This new version can be executed using the following command:
 
 ```shell
-# On ignore les logs des services mongo et redis pour éviter une pollution des logs
+# Ignore logs from the mongo and redis services to avoid log pollution
 docker compose up --no-attach mongo --no-attach redis
 ```
 
-> **Question**: Comparez les deux versions (avec et sans Dapr) du service NodeJS. Comment le service recupère t-il le message ?
+> **Question**: Compare the two versions (with and without Dapr) of the NodeJS service. How does the service retrieve the message?
 
-Solution :
-
+Solution:
 {% collapsible %}
-Un appel HTTP générique est effectué sur le port 3500 **de l'interface localhost** du service. Ce port est celui utilisé par défaut par Dapr.
+A generic HTTP call is made to the port 3500 **of the localhost interface** of the service. This port is the default one used by Dapr.
 
 ```ts
 // src/Lab1/1-decoupling/withDapr/node/src/app.ts, line 9
@@ -34,53 +45,53 @@ const stateStoreName = `statestore`;
 const stateUrl = `http://localhost:${daprPort}/v1.0/state/${stateStoreName}`;
 ```
 
-En effet, Dapr fonctionne avec le principe du `sidecar`. Un sidecar est un petit programme qui va venir se greffer sur chacun des services que nous allons déployer. Chaque couple (application principale, sidecar) partage la même interface localhost.
+Indeed, Dapr works with the **sidecar** principle. A sidecar is a small program that attaches to each of the services we deploy. Each pair (main application, sidecar) shares the same localhost interface.
 
-À chaque fois que l'application principale voudra effectuer une communication vers un autre service, elle pourra se contenter d'appeller son sidecar, qui lui se chargera à son tour de transmettre l'appel
+Whenever the main application wants to communicate with another service, it can simply call its sidecar, which will, in turn, handle the call.
 
 {% endcollapsible %}
 
-> **Question** : Dans le fichier `docker-compose.yml`, où sont les *sidecars* Dapr ? Quelle est l'instruction docker-compose leur permettant à chaque *sidecar* d'accéder à l'interface localhost du service auquel il est attaché ? Le conteneur Redis a t-il un sidecar ?
+> **Question**: In the `docker-compose.yml` file, where are the Dapr *sidecars*? What is the docker-compose instruction that allows each *sidecar* to access the localhost interface of the service it is attached to? Does the Redis container have a sidecar?
 
 Solution:
 {% collapsible %}
 
 ```yml
-  # Application principale
+  # Main application
   nodeapp:
     build: ./node
   # Sidecar
   nodeapp-dapr:
     image: "daprio/daprd:edge"
-    # Configuration du sidecar pour l'application node
+    # Sidecar configuration for the node application
     command: ["./daprd",
-    # Id de l'application pour Dapr
-    # Cet ID permet par la suite de faire de l'invocation de service (voir Lab2)
+    # Application ID for Dapr
+    # This ID allows later service invocation (see Lab2)
      "-app-id", "nodeapp",
-    # Port d'écoute de l'application principale
-    # Utilisé quand le sidecar transmet des informations à l'application principale
+    # Main application listening port
+    # Used when the sidecar transmits information to the main application
      "-app-port", "3000",
-     # Niveau de verbosité du sidecar
-     # "info" ou "debug" donneront plus de details sur le fonctionnement du sidecar
+     # Verbosity level of the sidecar
+     # "info" or "debug" will provide more details on the sidecar's operation
      "-log-level", "warn",
-     # Où trouver les composants Dapr (question suivante)
+     # Where to find Dapr components (next question)
      "-components-path", "/components"]
     volumes:
         - "./components/:/components:ro"
-    # Demande au sidecar de partager son interface localhost avec l'application principale
+    # Instructs the sidecar to share its localhost interface with the main application
     network_mode: "service:nodeapp"
 ```
 
-Le conteneur Redis n'a pas de sidecar, puisque ce n'est pas un service mais seulement un moyen de communication (ou support de stockage). Il n'a pas besoin des fonctionnalités apportées par Dapr
+The Redis container does not have a sidecar since it is not a service but only a means of communication (or storage support). It does not need the features provided by Dapr.
 
 {% endcollapsible %}
 
-> **Question**: Toujours dans le `docker-compose.yml`, on peut remarquer qu'un [volume](https://docs.docker.com/storage/volumes/) nommé **components** est monté sur chacun des sidecars, que contient le dossier ? Quelle peut être l'utilité des fichiers qu'il contient ?
+> **Question**: Still in the `docker-compose.yml` file, we can notice that a [volume](https://docs.docker.com/storage/volumes/) named **components** is mounted on each of the sidecars. What does the folder contain? What could be the purpose of the files it contains?
 
 Solution:
 {% collapsible %}
 
-Ce dossier contient un fichier yaml ressemblant à ceci.
+This folder contains a YAML file that looks like this:
 
 ```yml
 apiVersion: dapr.io/v1alpha1
@@ -88,63 +99,62 @@ kind: Component
 metadata:
   name: statestore
 spec:
-  # Parmi les composants de gestion d'état, on selectionne Redis
+  # Among the state management components, we select Redis
   type: state.redis
   version: v1
-  # On renseigne l'adresse et les identifiants de connexion à Redis
+  # Provide the address and connection credentials to Redis
   metadata:
     - name: redisHost
-      # On peut résoudre l'ip de Redis par son nom
-      # grâce au réseau hello-dapr de Docker-compose
+      # We can resolve the Redis IP by its name
+      # thanks to the Docker-compose hello-dapr network
       value: redis:6379
     - name: redisPassword
       value: ""
 ```
 
-Il s'agit d'une définition d'un **[composant](https://docs.dapr.io/concepts/components-concept/)** Dapr. 
+This is a definition of a Dapr **[component](https://docs.dapr.io/concepts/components-concept/)**.
 
-Ces composants sont une idée centrale de Dapr et ce sont eux qui permettent cette notion de découplage.
-Ici, on annonce déclarativement que l'on veut utiliser Redis en tant que composant de stockage d'état.
-Grâce à cette déclaration, tous les appels que les applications feront pour récupérer ou stocker un état seront
-redirigés vers Redis.
-Il suffirait de changer ce composant pour changer le support de stockage sous-jacent.
+These components are a central idea of Dapr, and they are what allows this notion of decoupling.
+Here, we declaratively announce that we want to use Redis as a state storage component.
+With this declaration, all calls that applications make to retrieve or store a state will be
+redirected to Redis. Changing this component would change the underlying storage support.
 
 {% endcollapsible %}
 
-Avec toutes ces informations en tête, nous allons pouvoir faire un récapitulatif.
+With all this information in mind, we can recap.
 
-![Première app avec Dapr](/media/lab1/first-app-dapr.png)
+![First app with Dapr](/media/lab1/first-app-dapr.png)
 
-Le chemin parcouru par notre état est le suivant :
+The path taken by our state is as follows:
 
-- Le service Python communique l'état à son sidecar avec une URL de la forme :
+- The Python service communicates the state to its sidecar with a URL of the form:
 
 ```bash
-# On retrouve dans l'URL l'id spécifié dans le sidecar du service Node.
-# Cette URL a pour but d'invoquer la méthode "neworder" sur le service "nodeapp"
-# Nous verrons cela en détail dans le second lab
+# The URL contains the ID specified in the Node service's sidecar.
+# This URL is intended to invoke the "neworder" method on the "nodeapp" service.
+# We will see this in detail in the second lab.
 http://localhost:3500/v1.0/invoke/nodeapp/method/neworder
 ```
 
-- Le sidecar du service python communique l'état au sidecar du service donc `-l'app-id` est celui spécifié dans l'URL, ici **nodeapp**
-- Le sidecar du service Node transmet l'état au service Node
-- le service node indique à son sidecar qu'il veut stocker un état dans le composant de stockage nommé **storename** avec un appel de la forme
+- The Python service's sidecar communicates the state to the Node service's sidecar, where `-l'app-id` is the one specified in the URL, here **nodeapp**.
+- The Node service's sidecar forwards the state to the Node service.
+- The Node service tells its sidecar that it wants to store a state in the storage component named **storename** with a call like:
 
 ```shell
 POST /state/storename
 ```
 
-- Dapr regarde alors ses composants et récupère le composant de gestion d'état de nom **storename**. Ce composant specifie l'hôte et les paramètres de connexion de l'implémentation du composant, ici Redis. L'appel est ensuite transféré vers Redis.
+- Dapr then looks at its components and retrieves the storage management component named **storename**. This component specifies the host and connection parameters of the component's implementation, here Redis. The call is then forwarded to Redis.
 
-> **En Pratique** : En vous servant [de la documentation dediée](https://docs.dapr.io/reference/components-reference/supported-state-stores/setup-mongodb/), migrez le gestionnaire de message de Redis à MongoDB
+> **Practical Exercise**: Using [the dedicated documentation](https://docs.dapr.io/reference/components-reference/supported-state-stores/setup-mongodb/), migrate the Redis state manager to MongoDB.
 
-**Indication** : La base de données MongoDB est déjà présente dans le fichier `docker-compose.yml`, il faut simplement l'utiliser
+**Hint**: The MongoDB database is already present in the `docker-compose.yml` file; you just need to use it.
 
 Solution:
 {% collapsible %}
-Pour changer le gestionnaire d'état de Redis vers MongoDB, il faut simplement changer le composant dédié, `src/Lab1/1-decoupling/withDapr/components/statestore.yaml`
+To change the state manager from Redis to MongoDB, you simply need to change the dedicated component, `src/Lab1/1-decoupling/withDapr/components/statestore.yaml`.
 
-En l'état le composant utilise Redis :
+Currently, the component uses Redis:
 
 ```yml
 apiVersion: dapr.io/v1alpha1
@@ -161,7 +171,7 @@ spec:
       value: ""
 ```
 
-Changer simplement le type du composant en MongoDB et les identifiants d'accès permet de changer de gestionnaire d'état:
+Simply changing the component type in MongoDB and access credentials allows you to switch the state manager:
 
 ```yml
 apiVersion: dapr.io/v1alpha1
@@ -180,6 +190,7 @@ spec:
       value: example
     - name: databaseName
       value: admin
-```
+  ```
 
-{% endcollapsible %}
+  {% endcollapsible %}
+  

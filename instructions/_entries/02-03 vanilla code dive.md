@@ -5,30 +5,31 @@ title: Plonger dans le code
 parent-id: lab-1
 ---
 
-En regardant le code des services Node et Python, répondre aux questions suivantes :
+```markdown
+Looking at the code of the Node and Python services, answer the following questions:
 
-> **Question**: Par quel moyen les trois services communiquent-ils entre eux ?
+> **Question**: How do the three services communicate with each other?
 
 Solution:
 {% collapsible %}
-Les trois services communiquent **directement**:
+The three services communicate **directly**:
 
-- Le service Python appelle le service Node via un **appel HTTP** de l'URL de son serveur.
-- Le service Node appelle Redis avec la bibliothèque **[ioredis](https://www.npmjs.com/package/ioredis)**, qui elle-même encapsule le protocole **RESP**, le protocole spécifique à Redis.
+- The Python service calls the Node service via an **HTTP request** to its server's URL.
+- The Node service calls Redis using the **[ioredis](https://www.npmjs.com/package/ioredis)** library, which encapsulates the **RESP** protocol, Redis's specific protocol.
   {% endcollapsible %}
 
-Imaginons que cette application est déployée en production depuis quelques temps. Cependant, après quelques mois, un nouveau besoin émerge : il faut migrer le support de stockage d'état de Redis vers MongoDB.
+Imagine that this application has been deployed in production for some time. However, after a few months, a new requirement emerges: the state storage support needs to be migrated from Redis to MongoDB.
 
-> **Question**: Quel serait l'impact de ce changement sur les services NodeJS et Python ? Proposez un protocole pour effectuer cette migration
+> **Question**: What would be the impact of this change on the NodeJS and Python services? Propose a protocol to perform this migration.
 
 Solution:
 {% collapsible %}
-L'appel du service Python vers le service Node ne serait pas impacté.
+The call from the Python service to the Node service would not be affected.
 
-Le code de l'application Nodejs devrait cependant être réécrit.
-En effet, pour communiquer avec Redis, le service utilise la bibliothèque **[ioredis](https://www.npmjs.com/package/ioredis)**.
-Cette bibliothèque n'a plus sa place dans le code si l'implémentation change de Redis à MongoDb.
+However, the Nodejs application code would need to be rewritten.
+Indeed, to communicate with Redis, the service uses the **[ioredis](https://www.npmjs.com/package/ioredis)** library.
+This library would no longer be suitable in the code if the implementation changes from Redis to MongoDB.
 
-C'est une des conséquences d'un **couplage applicatif fort**
-
+This is one of the consequences of a **strong application coupling**.
 {% endcollapsible %}
+```

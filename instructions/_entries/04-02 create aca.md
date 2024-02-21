@@ -1,24 +1,33 @@
 ---
 sectionid: lab3-create-aca
 sectionclass: h2
-title: Créer un nouvel environnement ACA
+title: Create a new ACA environment
 parent-id: lab-3
 ---
 
-Pour créer votre prmière application Container Apps nous allons utiliser la CLI, plus particulièrement une des commandes de l'extension qui a été installée en pré-requis `az containerapp create`.
+### Solution for Creating an Environment and Deploying a Service
 
-Mais avant de créer une application, il faut tout d'abord créer un nouvel environnement Container Apps.
-
-**Explication**:
-Un **environnement** Containers Apps est un groupe dans lequel sont publiés des services. Tous les services publiés dans le même environement partage le même réseau (vNet), le même aggrégateur de logs (workspace Logs Analytics) et éventuellement les mêmes ressources de calcul sous-jacentes (si l'orchestrateur les affectes sur la même machine).
-Pour que deux services puissent communiquer avec Dapr, ils doivent partager le même environnement.
-![Aca env explanation](/media/lab3/create-aca-env-explanation.png)
-
-Pour créer un nouvel environnement, les commandes suivantes peuvent être utilisée :
+Before creating a service, let's create a new environment for Azure Container Apps. We'll use the Azure CLI with the following commands:
 
 ```bash
-az group create -n <Nom_ressource_group>  --location westeurope
-az containerapp env create -n <Nom_env> -g <Nom_ressource_group> --location westeurope
+# Replace <Resource_Group_Name> and <Environment_Name> with your desired names
+az group create -n <Resource_Group_Name> --location westeurope
+az containerapp env create -n <Environment_Name> -g <Resource_Group_Name> --location westeurope
 ```
 
-Notre environnement étant crée, il ne nous reste plus qu'à créer les services à l'intérieur !
+These commands create a new resource group and a new environment within that resource group. Ensure that you replace `<Resource_Group_Name>` and `<Environment_Name>` with your preferred names.
+
+Once the environment is created, we can proceed to deploy a service. For this example, we'll deploy a simple hello-world service using the Azure CLI.
+
+```bash
+# Replace <Service_Name> and <Image_Name> with your desired names
+az containerapp create -n <Service_Name> --image mcr.microsoft.com/azuredocs/containerapps-helloworld:latest -e <Environment_Name> --rg <Resource_Group_Name> --ingress external --target-port 80 --os-type Linux
+```
+
+Replace `<Service_Name>` with the desired name for your service, and `<Resource_Group_Name>` and `<Environment_Name>` with the names you used while creating the resource group and environment.
+
+This command deploys a hello-world service (`mcr.microsoft.com/azuredocs/containerapps-helloworld:latest`) with the specified settings. It uses an external ingress, exposes the service on port 80, and specifies Linux as the operating system.
+
+After the deployment is successful, you will receive information about the deployed service, including its ID, name, location, and configuration details.
+
+Remember to replace placeholder values with your actual names.
