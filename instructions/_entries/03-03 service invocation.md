@@ -97,7 +97,7 @@ Breaking down each component:
 - **nodeapp**: Name of the service to call
 - **method**: Calling a method on the service
 - **neworder**: Name of the method to call on the service
-  {% endcollapsible %}
+{% endcollapsible %}
 
 > **Question**: What is the difference between Service Meshing and Dapr's service invocation?
 
@@ -132,6 +132,8 @@ Dapr, therefore, has a modular architecture, and there are other optional servic
 
 - **[Placement](https://docs.dapr.io/concepts/dapr-services/placement/)**, enabling the use of the [Actor model](https://en.wikipedia.org/wiki/Actor_model)
 - The internal Dapr **[Name Resolution Component](https://docs.dapr.io/reference/components-reference/supported-name-resolution/)** is also modular. By default, flat resolution ([mDNS](https://en.wikipedia.org/wiki/Multicast_DNS)) is used, but **coreDNS
+
+{% endcollapsible %}
 
 ## In Practice:
 
