@@ -172,9 +172,7 @@ To avoid overwhelming the service in case of high demand, we will opt for asynch
 
 Here's the target:
 
-![Step 1](/media/lab
-
-2/pubsub/app-step-1-pubsub.png)
+![Step 1](/media/lab2/pubsub/app-step-1-pubsub.png)
 
 Note:
 

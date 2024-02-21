@@ -1,7 +1,7 @@
 ---
 sectionid: lab1-enterdapr
 sectionclass: h2
-title: Le role de Dapr
+title: Enter Dapr
 parent-id: lab-1
 ---
 

@@ -1,11 +1,10 @@
 ---
 sectionid: lab1-codedive
 sectionclass: h2
-title: Plonger dans le code
+title: Code Dive
 parent-id: lab-1
 ---
 
-```markdown
 Looking at the code of the Node and Python services, answer the following questions:
 
 > **Question**: How do the three services communicate with each other?
@@ -32,4 +31,3 @@ This library would no longer be suitable in the code if the implementation chang
 
 This is one of the consequences of a **strong application coupling**.
 {% endcollapsible %}
-```

@@ -1,7 +1,7 @@
 ---
 sectionid: first-app
 sectionclass: h2
-title: Une première application
+title: A first application
 parent-id: lab-1
 ---
 
