@@ -38,14 +38,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      # - name: "Build and push"
+      #   uses: docker/build-push-action@v3
+      #   with:
+      #     context: ./src/Lab2/implementations/${{ matrix.service }}
+      #     push: true
+      #     tags: |
+      #       ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ matrix.service }}:latest
+      #       dockerutils/${{ matrix.service }}:latest
+
       - name: "Build and push"
-        uses: docker/build-push-action@v3
-        with:
-          context: ./src/Lab2/implementations/${{ matrix.service }}
-          push: true
-          tags: |
-            ${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ matrix.service }}:latest
-            dockerutils/${{ matrix.service }}:latest
+            uses: docker/build-push-action@v3
+            with:
+              context: ./src/Lab2/implementations/${{ matrix.service }}
+              push: true
+              tags: |
+                dockerutils/${{ matrix.service }}:latest
+
   update-staging-guide:
     runs-on: ubuntu-latest
     steps:
